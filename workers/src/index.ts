@@ -1,5 +1,6 @@
 import { GameRoom } from './game-room';
 import { AdminAPI } from './admin-api';
+import { Auth } from './auth';
 import type { Env } from './types';
 
 export { GameRoom };
@@ -73,7 +74,12 @@ export default {
       return stub.fetch(new Request(`${url.origin}/state`));
     }
 
-    // Admin API endpoints
+    // Auth endpoints (public)
+    if (url.pathname.startsWith('/api/auth/') && env.DATABASE_URL) {
+      return handleAuthAPI(request, url, env);
+    }
+
+    // Admin API endpoints (protected)
     if (url.pathname.startsWith('/api/admin/') && env.DATABASE_URL) {
       return handleAdminAPI(request, url, env);
     }
@@ -85,7 +91,122 @@ export default {
   }
 };
 
+async function handleAuthAPI(request: Request, url: URL, env: Env): Promise<Response> {
+  const auth = new Auth(env.DATABASE_URL);
+
+  try {
+    // POST /api/auth/register - Register new user
+    if (url.pathname === '/api/auth/register' && request.method === 'POST') {
+      const body = await request.json() as { email: string; password: string; name: string };
+      
+      if (!body.email || !body.password || !body.name) {
+        return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      try {
+        const user = await auth.register(body.email, body.password, body.name);
+        const token = await auth.generateToken(user);
+        
+        return new Response(JSON.stringify({ user, token }), {
+          status: 201,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch (error) {
+        return new Response(JSON.stringify({ error: (error as Error).message }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // POST /api/auth/login - Login user
+    if (url.pathname === '/api/auth/login' && request.method === 'POST') {
+      const body = await request.json() as { email: string; password: string };
+      
+      if (!body.email || !body.password) {
+        return new Response(JSON.stringify({ error: 'Missing email or password' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const result = await auth.login(body.email, body.password);
+      
+      if (!result) {
+        return new Response(JSON.stringify({ error: 'Invalid email or password' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // GET /api/auth/me - Get current user
+    if (url.pathname === '/api/auth/me' && request.method === 'GET') {
+      const token = auth.extractToken(request);
+      
+      if (!token) {
+        return new Response(JSON.stringify({ error: 'No token provided' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const user = await auth.getUserFromToken(token);
+      
+      if (!user) {
+        return new Response(JSON.stringify({ error: 'Invalid token' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ user }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    return new Response(JSON.stringify({ error: 'Endpoint not found' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('Auth API error:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+}
+
 async function handleAdminAPI(request: Request, url: URL, env: Env): Promise<Response> {
+  // Verify authentication
+  const auth = new Auth(env.DATABASE_URL);
+  const token = auth.extractToken(request);
+  
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Authentication required' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
+  const user = await auth.getUserFromToken(token);
+  
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
   const adminAPI = new AdminAPI(env.DATABASE_URL);
   const pathParts = url.pathname.split('/');
 
