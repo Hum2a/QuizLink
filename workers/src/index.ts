@@ -396,6 +396,182 @@ async function handleUserAuthAPI(
   }
 }
 
+async function handleUserAPI(
+  request: Request,
+  url: URL,
+  env: Env
+): Promise<Response> {
+  // Verify user authentication
+  const userAuth = new UserAuth(env.DATABASE_URL);
+  const token = userAuth.extractToken(request);
+
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Authentication required' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const payload = await userAuth.verifyToken(token);
+
+  if (!payload) {
+    return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const adminAPI = new AdminAPI(env.DATABASE_URL);
+  const pathParts = url.pathname.split('/');
+
+  try {
+    // GET /api/user/quizzes - Get user's quizzes
+    if (url.pathname === '/api/user/quizzes' && request.method === 'GET') {
+      const quizzes = await adminAPI.getUserQuizzes(payload.userId);
+      return new Response(JSON.stringify(quizzes), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // GET /api/user/quizzes/public - Get public quizzes
+    if (
+      url.pathname === '/api/user/quizzes/public' &&
+      request.method === 'GET'
+    ) {
+      const quizzes = await adminAPI.getPublicQuizzes();
+      return new Response(JSON.stringify(quizzes), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // GET /api/user/quizzes/:id - Get specific quiz
+    if (
+      pathParts[3] === 'quizzes' &&
+      pathParts[4] &&
+      request.method === 'GET' &&
+      !pathParts[5]
+    ) {
+      const quiz = await adminAPI.getQuizTemplate(pathParts[4]);
+      if (!quiz) {
+        return new Response(JSON.stringify({ error: 'Quiz not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(JSON.stringify(quiz), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // POST /api/user/quizzes - Create quiz
+    if (url.pathname === '/api/user/quizzes' && request.method === 'POST') {
+      const body = (await request.json()) as any;
+      body.created_by = payload.userId;
+      const id = await adminAPI.createQuizTemplate(body);
+      return new Response(JSON.stringify({ id }), {
+        status: 201,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // PUT /api/user/quizzes/:id - Update quiz
+    if (
+      pathParts[3] === 'quizzes' &&
+      pathParts[4] &&
+      request.method === 'PUT'
+    ) {
+      const body = (await request.json()) as any;
+      await adminAPI.updateQuizTemplate(pathParts[4], body);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // DELETE /api/user/quizzes/:id - Delete quiz
+    if (
+      pathParts[3] === 'quizzes' &&
+      pathParts[4] &&
+      request.method === 'DELETE'
+    ) {
+      await adminAPI.deleteQuizTemplate(pathParts[4]);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // GET /api/user/quizzes/:id/questions - Get quiz questions
+    if (
+      pathParts[3] === 'quizzes' &&
+      pathParts[4] &&
+      pathParts[5] === 'questions' &&
+      request.method === 'GET'
+    ) {
+      const questions = await adminAPI.getQuizQuestions(pathParts[4]);
+      return new Response(JSON.stringify(questions), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // POST /api/user/quizzes/:id/questions - Add question
+    if (
+      pathParts[3] === 'quizzes' &&
+      pathParts[4] &&
+      pathParts[5] === 'questions' &&
+      request.method === 'POST'
+    ) {
+      const body = (await request.json()) as any;
+      body.quiz_template_id = pathParts[4];
+      const id = await adminAPI.addQuestion(body);
+      return new Response(JSON.stringify({ id }), {
+        status: 201,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // PUT /api/user/questions/:id - Update question
+    if (
+      pathParts[3] === 'questions' &&
+      pathParts[4] &&
+      request.method === 'PUT'
+    ) {
+      const body = (await request.json()) as any;
+      await adminAPI.updateQuestion(pathParts[4], body);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // DELETE /api/user/questions/:id - Delete question
+    if (
+      pathParts[3] === 'questions' &&
+      pathParts[4] &&
+      request.method === 'DELETE'
+    ) {
+      await adminAPI.deleteQuestion(pathParts[4]);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: 'Endpoint not found' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('User API error:', error);
+    return new Response(
+      JSON.stringify({
+        error: 'Internal server error',
+        message: (error as Error).message,
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  }
+}
+
 async function handleAdminAPI(
   request: Request,
   url: URL,
