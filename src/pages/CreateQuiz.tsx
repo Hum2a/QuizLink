@@ -374,6 +374,192 @@ function CreateQuiz() {
           />
         )}
       </div>
+
+      <style>{`
+        .quiz-form {
+          background: white;
+          padding: 2rem;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          margin-bottom: 2rem;
+        }
+
+        .form-group {
+          margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+          color: #374151;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          border: 2px solid #e5e7eb;
+          border-radius: 8px;
+          font-size: 1rem;
+          transition: border-color 0.2s;
+          font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+          outline: none;
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+        }
+
+        .checkbox-label {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          cursor: pointer;
+          margin-bottom: 0;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+          width: auto;
+          margin: 0;
+          padding: 0;
+          transform: scale(1.2);
+        }
+
+        .questions-section {
+          background: white;
+          padding: 2rem;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+        }
+
+        .section-header h2 {
+          margin: 0;
+          color: #1f2937;
+        }
+
+        .questions-list {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .question-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 1rem;
+          padding: 1.5rem;
+          border: 2px solid #e5e7eb;
+          border-radius: 8px;
+          background: #f9fafb;
+        }
+
+        .question-number {
+          background: #667eea;
+          color: white;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          font-size: 0.875rem;
+          flex-shrink: 0;
+        }
+
+        .question-content {
+          flex: 1;
+        }
+
+        .question-content h4 {
+          margin: 0 0 0.75rem 0;
+          color: #1f2937;
+          font-size: 1.1rem;
+        }
+
+        .question-options {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .option-badge {
+          padding: 0.5rem 0.75rem;
+          border-radius: 6px;
+          background: white;
+          border: 1px solid #e5e7eb;
+          font-size: 0.875rem;
+        }
+
+        .option-badge.correct {
+          background: #dcfce7;
+          border-color: #22c55e;
+          color: #166534;
+        }
+
+        .question-actions {
+          display: flex;
+          gap: 0.5rem;
+          align-items: flex-start;
+        }
+
+        .btn-sm {
+          padding: 0.5rem 0.75rem;
+          font-size: 0.875rem;
+          border-radius: 6px;
+          border: none;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .btn-sm.btn-secondary {
+          background: #f3f4f6;
+          color: #374151;
+          border: 1px solid #d1d5db;
+        }
+
+        .btn-sm.btn-secondary:hover {
+          background: #e5e7eb;
+        }
+
+        .btn-sm.btn-danger {
+          background: #fef2f2;
+          color: #dc2626;
+          border: 1px solid #fecaca;
+        }
+
+        .btn-sm.btn-danger:hover {
+          background: #fee2e2;
+        }
+
+        .empty-state-small {
+          text-align: center;
+          padding: 2rem;
+          color: #6b7280;
+        }
+
+        .empty-state-small p {
+          margin-bottom: 1rem;
+        }
+      `}</style>
     </div>
   );
 }
