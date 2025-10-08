@@ -90,7 +90,7 @@ function UserProfile() {
       <div className="admin-dashboard">
         {/* User Info Card */}
         <div className="dashboard-welcome">
-          <div className="profile-avatar" style={{ backgroundColor: user.avatar_color }}>
+          <div className={`profile-avatar avatar-${user.avatar_color.replace('#', '')}`}>
             {user.display_name.charAt(0).toUpperCase()}
           </div>
           <h2>{user.display_name}</h2>
@@ -174,7 +174,7 @@ function UserProfile() {
         </div>
 
         {/* Quiz Stats */}
-        {profile?.quiz_stats?.length > 0 && (
+        {profile && profile.quiz_stats && profile.quiz_stats.length > 0 && (
           <div className="analytics-section">
             <h2>📊 Quiz Performance</h2>
             <div className="quiz-grid">

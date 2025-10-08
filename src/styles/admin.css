@@ -87,7 +87,18 @@
   color: white;
   font-weight: bold;
   margin: 0 auto 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
+
+/* Avatar colors - fallback */
+.avatar-667eea { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.avatar-764ba2 { background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); }
+.avatar-f093fb { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.avatar-4facfe { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.avatar-43e97b { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+.avatar-fa709a { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.avatar-feca57 { background: linear-gradient(135deg, #feca57 0%, #fa709a 100%); }
+.avatar-ff6348 { background: linear-gradient(135deg, #ff6348 0%, #fd746c 100%); }
 
 .profile-username {
   color: #667eea;
