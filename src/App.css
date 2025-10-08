@@ -561,6 +561,42 @@ body {
   font-style: italic;
 }
 
+.admin-link-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+}
+
+.btn-admin-link {
+  background: white;
+  color: #667eea;
+  padding: 10px 20px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s;
+  display: inline-block;
+}
+
+.btn-admin-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn-full-width {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.login-hint {
+  text-align: center;
+  margin-top: 20px;
+  color: #999;
+  font-size: 0.9rem;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .app {
