@@ -1,0 +1,73 @@
+# GitHub issue labels for QuizLink
+
+- name: bug
+  color: d73a4a
+  description: Something isn't working
+
+- name: enhancement
+  color: a2eeef
+  description: New feature or request
+
+- name: documentation
+  color: 0075ca
+  description: Improvements or additions to documentation
+
+- name: duplicate
+  color: cfd3d7
+  description: This issue or pull request already exists
+
+- name: good first issue
+  color: 7057ff
+  description: Good for newcomers
+
+- name: help wanted
+  color: 008672
+  description: Extra attention is needed
+
+- name: invalid
+  color: e4e669
+  description: This doesn't seem right
+
+- name: question
+  color: d876e3
+  description: Further information is requested
+
+- name: wontfix
+  color: ffffff
+  description: This will not be worked on
+
+- name: frontend
+  color: '1d76db'
+  description: Frontend (React) related
+
+- name: backend
+  color: fbca04
+  description: Backend (Workers) related
+
+- name: database
+  color: '0e8a16'
+  description: Database related
+
+- name: deployment
+  color: '5319e7'
+  description: Deployment related
+
+- name: security
+  color: d73a4a
+  description: Security vulnerability or concern
+
+- name: performance
+  color: ff6b6b
+  description: Performance improvement
+
+- name: refactor
+  color: fef2c0
+  description: Code refactoring
+
+- name: dependencies
+  color: '0366d6'
+  description: Pull requests that update a dependency file
+
+- name: ci
+  color: '000000'
+  description: CI/CD pipeline related
