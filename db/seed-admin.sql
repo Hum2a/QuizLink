@@ -1,19 +1,20 @@
 -- Seed data for QuizLink admin and default quiz
 
--- Create a default admin user (password: admin123 - CHANGE THIS!)
--- Password hash is bcrypt of 'admin123'
-INSERT INTO admin_users (id, email, password_hash, name) VALUES
-('00000000-0000-0000-0000-000000000001', 'admin@quizlink.com', '$2a$10$rZ8qh9PvMJ8kXCJZvqXzGeTYGz3Q8YfKQZJ8ZqJ8ZqJ8ZqJ8ZqJ8Z', 'Admin User')
-ON CONFLICT (email) DO NOTHING;
+-- NOTE: Admin users should be created via the registration page
+-- The first user to register will become an admin
+-- This seed file just creates the quiz templates
+
+-- If you want to create a default admin user via SQL, use the registration endpoint instead:
+-- POST https://quizlink-api.humzab1711.workers.dev/api/auth/register
+-- Body: { "email": "your@email.com", "password": "yourpassword", "name": "Your Name" }
 
 -- Create a default quiz template
-INSERT INTO quiz_templates (id, title, description, category, difficulty, created_by, is_public) VALUES
+INSERT INTO quiz_templates (id, title, description, category, difficulty, is_public) VALUES
 ('00000000-0000-0000-0000-000000000002', 
  'Birthday Party Trivia', 
  'Fun trivia questions perfect for birthday celebrations!',
  'Party Games',
  'easy',
- '00000000-0000-0000-0000-000000000001',
  true)
 ON CONFLICT DO NOTHING;
 
