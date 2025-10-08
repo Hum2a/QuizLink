@@ -6,6 +6,7 @@ import QuizLibrary from './pages/QuizLibrary';
 import QuizEditor from './pages/QuizEditor';
 import Analytics from './pages/Analytics';
 import AdminLogin from './pages/AdminLogin';
+import AdminRegister from './pages/AdminRegister';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -14,8 +15,9 @@ function App() {
       {/* Main quiz game flow */}
       <Route path="/" element={<GameFlow />} />
       
-      {/* Admin login (public) */}
+      {/* Auth routes (public) */}
       <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/register" element={<AdminRegister />} />
       
       {/* Protected admin routes */}
       <Route 
