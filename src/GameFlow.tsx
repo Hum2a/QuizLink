@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './App.css';
 import JoinScreen from './components/JoinScreen';
 import Lobby from './components/Lobby';
@@ -9,8 +9,10 @@ import ResultsView from './components/ResultsView';
 import type { GameState } from './types';
 import { WebSocketClient } from './websocket-client';
 import { config } from './config';
+import { userAuthService } from './services/userAuth';
 
 function GameFlow() {
+  const navigate = useNavigate();
   const [wsClient, setWsClient] = useState<WebSocketClient | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [playerId, setPlayerId] = useState<string>('');
@@ -20,6 +22,28 @@ function GameFlow() {
   const [roomCode, setRoomCode] = useState<string>('QUIZLINK');
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string>('');
+  const [currentUser, setCurrentUser] = useState(userAuthService.getUser());
+
+  // Check if user is authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (!userAuthService.isAuthenticated()) {
+        navigate('/register');
+        return;
+      }
+
+      // Verify token is still valid
+      const user = await userAuthService.getCurrentUser();
+      if (!user) {
+        navigate('/register');
+      } else {
+        setCurrentUser(user);
+        setPlayerName(user.display_name);
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
 
   const connectToRoom = async (code: string) => {
     setIsConnecting(true);
@@ -63,7 +87,8 @@ function GameFlow() {
 
   const handleJoin = async (name: string, asAdmin: boolean, roomCodeInput?: string) => {
     const code = roomCodeInput || roomCode;
-    setPlayerName(name);
+    const displayName = name || currentUser?.display_name || 'Player';
+    setPlayerName(displayName);
     
     if (!wsClient) {
       await connectToRoom(code);
@@ -72,9 +97,22 @@ function GameFlow() {
     // Wait a bit for connection to establish
     setTimeout(() => {
       if (wsClient && wsClient.isConnected()) {
-        wsClient.emit('join-game', { name, isAdmin: asAdmin, roomCode: code });
+        wsClient.emit('join-game', { 
+          name: displayName, 
+          isAdmin: asAdmin, 
+          roomCode: code,
+          userId: currentUser?.id 
+        });
       }
     }, 100);
+  };
+
+  const handleLogout = () => {
+    userAuthService.logout();
+    if (wsClient) {
+      wsClient.close();
+    }
+    navigate('/register');
   };
 
   const handleStartQuiz = () => {
@@ -107,19 +145,28 @@ function GameFlow() {
     }
   };
 
+  // Don't render if no user
+  if (!currentUser) {
+    return null;
+  }
+
   // Show join screen if not joined
   if (!hasJoined || !gameState) {
     return (
       <div className="app">
         <div className="admin-link-container">
-          <Link to="/admin" className="btn-admin-link">
-            ⚙️ Admin Dashboard
+          <Link to="/profile" className="btn-admin-link">
+            👤 {currentUser.display_name}
           </Link>
+          <button onClick={handleLogout} className="btn-admin-link">
+            🚪 Logout
+          </button>
         </div>
         <JoinScreen 
           onJoin={handleJoin} 
           isConnecting={isConnecting}
           error={error}
+          defaultName={currentUser.display_name}
         />
       </div>
     );
