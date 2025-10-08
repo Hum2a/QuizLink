@@ -1,6 +1,7 @@
 import { GameRoom } from './game-room';
 import { AdminAPI } from './admin-api';
 import { Auth } from './auth';
+import { UserAuth } from './user-auth';
 import type { Env } from './types';
 
 export { GameRoom };
@@ -74,7 +75,17 @@ export default {
       return stub.fetch(new Request(`${url.origin}/state`));
     }
 
-    // Auth endpoints (public)
+    // Admin auth endpoints (public)
+    if (url.pathname.startsWith('/api/auth/admin/') && env.DATABASE_URL) {
+      return handleAuthAPI(request, url, env);
+    }
+
+    // User auth endpoints (public)
+    if (url.pathname.startsWith('/api/auth/user/') && env.DATABASE_URL) {
+      return handleUserAuthAPI(request, url, env);
+    }
+
+    // Legacy auth redirect
     if (url.pathname.startsWith('/api/auth/') && env.DATABASE_URL) {
       return handleAuthAPI(request, url, env);
     }
@@ -179,6 +190,139 @@ async function handleAuthAPI(request: Request, url: URL, env: Env): Promise<Resp
 
   } catch (error) {
     console.error('Auth API error:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+async function handleUserAuthAPI(request: Request, url: URL, env: Env): Promise<Response> {
+  const userAuth = new UserAuth(env.DATABASE_URL);
+
+  try {
+    // POST /api/auth/user/register
+    if (url.pathname === '/api/auth/user/register' && request.method === 'POST') {
+      const body = await request.json() as { email: string; password: string; username: string; display_name: string };
+      
+      if (!body.email || !body.password || !body.username || !body.display_name) {
+        return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (body.password.length < 6) {
+        return new Response(JSON.stringify({ error: 'Password must be at least 6 characters' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      try {
+        const result = await userAuth.register(body.email, body.password, body.username, body.display_name);
+        return new Response(JSON.stringify(result), {
+          status: 201,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch (error) {
+        return new Response(JSON.stringify({ error: (error as Error).message }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // POST /api/auth/user/login
+    if (url.pathname === '/api/auth/user/login' && request.method === 'POST') {
+      const body = await request.json() as { emailOrUsername: string; password: string };
+      
+      if (!body.emailOrUsername || !body.password) {
+        return new Response(JSON.stringify({ error: 'Missing credentials' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const result = await userAuth.login(body.emailOrUsername, body.password);
+      
+      if (!result) {
+        return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // GET /api/auth/user/me
+    if (url.pathname === '/api/auth/user/me' && request.method === 'GET') {
+      const token = userAuth.extractToken(request);
+      
+      if (!token) {
+        return new Response(JSON.stringify({ error: 'No token provided' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const user = await userAuth.getUserFromToken(token);
+      
+      if (!user) {
+        return new Response(JSON.stringify({ error: 'Invalid token' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ user }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // GET /api/auth/user/profile
+    if (url.pathname === '/api/auth/user/profile' && request.method === 'GET') {
+      const token = userAuth.extractToken(request);
+      
+      if (!token) {
+        return new Response(JSON.stringify({ error: 'No token provided' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const payload = await userAuth.verifyToken(token);
+      if (!payload) {
+        return new Response(JSON.stringify({ error: 'Invalid token' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const profile = await userAuth.getUserProfile(payload.userId);
+      
+      if (!profile) {
+        return new Response(JSON.stringify({ error: 'User not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify(profile), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    return new Response(JSON.stringify({ error: 'Endpoint not found' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('User auth API error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
