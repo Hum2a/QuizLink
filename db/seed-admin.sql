@@ -57,13 +57,12 @@ INSERT INTO question_bank (quiz_template_id, question_text, options, correct_ans
 ON CONFLICT DO NOTHING;
 
 -- Create another template for general knowledge
-INSERT INTO quiz_templates (id, title, description, category, difficulty, created_by, is_public) VALUES
+INSERT INTO quiz_templates (id, title, description, category, difficulty, is_public) VALUES
 ('00000000-0000-0000-0000-000000000003', 
  'General Knowledge Quiz', 
  'Test your knowledge with these fun general trivia questions!',
  'General Knowledge',
  'medium',
- '00000000-0000-0000-0000-000000000001',
  true)
 ON CONFLICT DO NOTHING;
 
