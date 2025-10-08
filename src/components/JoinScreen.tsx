@@ -1,14 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface JoinScreenProps {
   onJoin: (name: string, isAdmin: boolean, roomCode?: string) => void;
   isConnecting?: boolean;
   error?: string;
+  defaultName?: string;
 }
 
-function JoinScreen({ onJoin, isConnecting, error }: JoinScreenProps) {
-  const [name, setName] = useState('');
+function JoinScreen({ onJoin, isConnecting, error, defaultName = '' }: JoinScreenProps) {
+  const [name, setName] = useState(defaultName);
   const [roomCode, setRoomCode] = useState('QUIZLINK');
+
+  // Update name if defaultName changes
+  useEffect(() => {
+    setName(defaultName);
+  }, [defaultName]);
 
   const handleJoinAsPlayer = () => {
     if (name.trim() && roomCode.trim()) {
