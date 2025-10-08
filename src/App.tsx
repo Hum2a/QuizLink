@@ -7,15 +7,23 @@ import QuizEditor from './pages/QuizEditor';
 import Analytics from './pages/Analytics';
 import AdminLogin from './pages/AdminLogin';
 import AdminRegister from './pages/AdminRegister';
+import UserLogin from './pages/UserLogin';
+import UserRegister from './pages/UserRegister';
+import UserProfile from './pages/UserProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
     <Routes>
-      {/* Main quiz game flow */}
-      <Route path="/" element={<GameFlow />} />
+      {/* User auth routes (public) */}
+      <Route path="/login" element={<UserLogin />} />
+      <Route path="/register" element={<UserRegister />} />
       
-      {/* Auth routes (public) */}
+      {/* Main quiz game flow (requires user login) */}
+      <Route path="/" element={<GameFlow />} />
+      <Route path="/profile" element={<UserProfile />} />
+      
+      {/* Admin auth routes (public) */}
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/register" element={<AdminRegister />} />
       
