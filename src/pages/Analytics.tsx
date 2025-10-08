@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { quizAPI } from '../services/api';
 import type { QuizTemplate, Analytics as AnalyticsData } from '../services/api';
+import { FaArrowLeft, FaEdit, FaGamepad, FaClock, FaUsers, FaTrophy } from 'react-icons/fa';
+import { IoStatsChart } from 'react-icons/io5';
+import { MdQuiz } from 'react-icons/md';
 import '../styles/admin.css';
 
 function Analytics() {
@@ -60,18 +63,18 @@ function Analytics() {
     <div className="admin-container">
       <header className="admin-header">
         <div>
-          <Link to="/admin/quizzes" className="btn-back">← Quiz Library</Link>
-          <h1>📊 Analytics: {quiz.title}</h1>
+          <Link to="/admin/quizzes" className="btn-back"><FaArrowLeft /> Quiz Library</Link>
+          <h1><IoStatsChart /> Analytics: {quiz.title}</h1>
         </div>
         <Link to={`/admin/quizzes/${id}`} className="btn-secondary">
-          ✏️ Edit Quiz
+          <FaEdit /> Edit Quiz
         </Link>
       </header>
 
       <div className="analytics-dashboard">
         <div className="stats-cards">
           <div className="stat-card">
-            <div className="stat-icon">🎮</div>
+            <div className="stat-icon"><FaGamepad size={40} color="#667eea" /></div>
             <div className="stat-info">
               <div className="stat-value">{analytics.total_games}</div>
               <div className="stat-label">Total Games</div>
@@ -79,7 +82,7 @@ function Analytics() {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">⏱️</div>
+            <div className="stat-icon"><FaClock size={40} color="#667eea" /></div>
             <div className="stat-info">
               <div className="stat-value">{formatDuration(analytics.avg_duration)}</div>
               <div className="stat-label">Avg Duration</div>
@@ -87,7 +90,7 @@ function Analytics() {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">👥</div>
+            <div className="stat-icon"><FaUsers size={40} color="#667eea" /></div>
             <div className="stat-info">
               <div className="stat-value">{analytics.unique_hosts}</div>
               <div className="stat-label">Unique Hosts</div>
@@ -95,7 +98,7 @@ function Analytics() {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">📝</div>
+            <div className="stat-icon"><MdQuiz size={40} color="#667eea" /></div>
             <div className="stat-info">
               <div className="stat-value">{quiz.question_count || 0}</div>
               <div className="stat-label">Questions</div>
@@ -104,7 +107,7 @@ function Analytics() {
         </div>
 
         <div className="analytics-section">
-          <h2>🏆 Top Scores</h2>
+          <h2><FaTrophy /> Top Scores</h2>
           {analytics.top_scores.length === 0 ? (
             <div className="empty-state-small">
               <p>No games played yet!</p>

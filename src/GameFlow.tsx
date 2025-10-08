@@ -10,6 +10,7 @@ import type { GameState } from './types';
 import { WebSocketClient } from './websocket-client';
 import { config } from './config';
 import { userAuthService } from './services/userAuth';
+import { FaUser, FaSignOutAlt } from 'react-icons/fa';
 
 function GameFlow() {
   const navigate = useNavigate();
@@ -156,10 +157,10 @@ function GameFlow() {
       <div className="app">
         <div className="admin-link-container">
           <Link to="/profile" className="btn-admin-link">
-            👤 {currentUser.display_name}
+            <FaUser /> {currentUser.display_name}
           </Link>
           <button onClick={handleLogout} className="btn-admin-link">
-            🚪 Logout
+            <FaSignOutAlt /> Logout
           </button>
         </div>
         <JoinScreen 

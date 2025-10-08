@@ -219,8 +219,8 @@
 }
 
 .dashboard-card .card-icon {
-  font-size: 3rem;
   margin-bottom: 15px;
+  color: #667eea;
 }
 
 .dashboard-card h3 {
@@ -287,10 +287,24 @@
   flex-wrap: wrap;
 }
 
-.search-input {
+.search-input-wrapper {
   flex: 1;
   min-width: 250px;
-  padding: 12px 20px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  color: #999;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 20px 12px 45px;
   border: 2px solid #e0e0e0;
   border-radius: 10px;
   font-size: 1rem;
@@ -458,9 +472,9 @@
 }
 
 .empty-icon {
-  font-size: 5rem;
   margin-bottom: 20px;
   opacity: 0.5;
+  color: #999;
 }
 
 .empty-state h2 {

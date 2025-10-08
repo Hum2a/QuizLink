@@ -1,4 +1,6 @@
 import type { GameState } from '../types';
+import { FaUsers, FaGamepad } from 'react-icons/fa';
+import { IoGameController } from 'react-icons/io5';
 
 interface AdminViewProps {
   gameState: GameState;
@@ -23,7 +25,7 @@ function AdminView({ gameState, onRevealAnswers, onNextQuestion, onReset }: Admi
   return (
     <div className="admin-view">
       <div className="admin-header">
-        <h2>🎮 Admin Control Panel</h2>
+        <h2><IoGameController /> Admin Control Panel</h2>
         <div className="question-counter">
           Question {gameState.currentQuestion + 1} of {gameState.totalQuestions}
         </div>
@@ -48,7 +50,7 @@ function AdminView({ gameState, onRevealAnswers, onNextQuestion, onReset }: Admi
 
       <div className="admin-grid">
         <div className="admin-section">
-          <h3>👥 Players ({answeredCount}/{nonAdminPlayers.length})</h3>
+          <h3><FaUsers /> Players ({answeredCount}/{nonAdminPlayers.length})</h3>
           {nonAdminPlayers.map((player) => (
             <div 
               key={player.id} 
@@ -67,7 +69,7 @@ function AdminView({ gameState, onRevealAnswers, onNextQuestion, onReset }: Admi
         </div>
 
         <div className="admin-section">
-          <h3>🎯 Controls</h3>
+          <h3><FaGamepad /> Controls</h3>
           <div className="admin-controls-grid">
             {!gameState.showResults ? (
               <button 

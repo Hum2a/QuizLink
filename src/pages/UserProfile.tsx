@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { userAuthService } from '../services/userAuth';
 import type { User } from '../services/userAuth';
+import { FaUser, FaGamepad, FaStar, FaTrophy, FaSignOutAlt, FaArrowLeft } from 'react-icons/fa';
+import { IoStatsChart } from 'react-icons/io5';
 import '../styles/admin.css';
 
 interface GameHistory {
@@ -79,11 +81,11 @@ function UserProfile() {
     <div className="admin-container">
       <header className="admin-header">
         <div>
-          <Link to="/" className="btn-back">← Back to Game</Link>
-          <h1>👤 My Profile</h1>
+          <Link to="/" className="btn-back"><FaArrowLeft /> Back to Game</Link>
+          <h1><FaUser /> My Profile</h1>
         </div>
         <button onClick={handleLogout} className="btn-secondary">
-          🚪 Logout
+          <FaSignOutAlt /> Logout
         </button>
       </header>
 
@@ -101,7 +103,7 @@ function UserProfile() {
         {/* Stats Cards */}
         <div className="stats-cards">
           <div className="stat-card">
-            <div className="stat-icon">🎮</div>
+            <div className="stat-icon"><FaGamepad size={40} color="#667eea" /></div>
             <div className="stat-info">
               <div className="stat-value">{user.total_games_played}</div>
               <div className="stat-label">Games Played</div>
@@ -109,7 +111,7 @@ function UserProfile() {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">⭐</div>
+            <div className="stat-icon"><FaStar size={40} color="#667eea" /></div>
             <div className="stat-info">
               <div className="stat-value">{user.total_score.toLocaleString()}</div>
               <div className="stat-label">Total Score</div>
@@ -117,7 +119,7 @@ function UserProfile() {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">🏆</div>
+            <div className="stat-icon"><FaTrophy size={40} color="#667eea" /></div>
             <div className="stat-info">
               <div className="stat-value">{user.highest_score}</div>
               <div className="stat-label">Highest Score</div>
@@ -125,7 +127,7 @@ function UserProfile() {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">📊</div>
+            <div className="stat-icon"><IoStatsChart size={40} color="#667eea" /></div>
             <div className="stat-info">
               <div className="stat-value">
                 {user.total_games_played > 0 
@@ -139,7 +141,7 @@ function UserProfile() {
 
         {/* Recent Games */}
         <div className="analytics-section">
-          <h2>🎮 Recent Games</h2>
+          <h2><FaGamepad /> Recent Games</h2>
           {profile && profile.recent_games && profile.recent_games.length > 0 ? (
             <div className="leaderboard-table">
               <table>
@@ -176,18 +178,18 @@ function UserProfile() {
         {/* Quiz Stats */}
         {profile && profile.quiz_stats && profile.quiz_stats.length > 0 && (
           <div className="analytics-section">
-            <h2>📊 Quiz Performance</h2>
+            <h2><IoStatsChart /> Quiz Performance</h2>
             <div className="quiz-grid">
               {profile.quiz_stats.map((stat) => (
                 <div key={stat.id} className="quiz-card">
                   <h3>{stat.quiz_title}</h3>
                   <div className="quiz-meta">
-                    <span className="quiz-stat">🎮 {stat.times_played} plays</span>
-                    <span className="quiz-stat">🏆 Best: {stat.best_score}</span>
+                    <span className="quiz-stat"><FaGamepad /> {stat.times_played} plays</span>
+                    <span className="quiz-stat"><FaTrophy /> Best: {stat.best_score}</span>
                   </div>
                   <div className="quiz-meta">
-                    <span className="quiz-stat">📊 Avg: {stat.avg_score}</span>
-                    <span className="quiz-stat">✅ {stat.total_correct}/{stat.total_questions} correct</span>
+                    <span className="quiz-stat"><IoStatsChart /> Avg: {stat.avg_score}</span>
+                    <span className="quiz-stat">✓ {stat.total_correct}/{stat.total_questions} correct</span>
                   </div>
                 </div>
               ))}

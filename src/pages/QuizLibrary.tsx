@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { quizAPI } from '../services/api';
 import type { QuizTemplate } from '../services/api';
+import { FaBook, FaPlusCircle, FaEdit, FaTrash, FaSearch, FaArrowLeft, FaFileAlt } from 'react-icons/fa';
+import { IoStatsChart } from 'react-icons/io5';
+import { MdQuiz } from 'react-icons/md';
 import '../styles/admin.css';
 
 function QuizLibrary() {
@@ -61,11 +64,11 @@ function QuizLibrary() {
     <div className="admin-container">
       <header className="admin-header">
         <div>
-          <Link to="/admin" className="btn-back">← Dashboard</Link>
-          <h1>📚 Quiz Library</h1>
+          <Link to="/admin" className="btn-back"><FaArrowLeft /> Dashboard</Link>
+          <h1><FaBook /> Quiz Library</h1>
         </div>
         <Link to="/admin/quizzes/new" className="btn-primary">
-          ➕ Create New Quiz
+          <FaPlusCircle /> Create New Quiz
         </Link>
       </header>
 
@@ -73,13 +76,16 @@ function QuizLibrary() {
 
       <div className="quiz-library">
         <div className="library-controls">
-          <input
-            type="text"
-            placeholder="🔍 Search quizzes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
+          <div className="search-input-wrapper">
+            <FaSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search quizzes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
           
           <select 
             value={categoryFilter} 
@@ -97,11 +103,11 @@ function QuizLibrary() {
 
         {filteredQuizzes.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">📝</div>
+            <div className="empty-icon"><MdQuiz size={100} /></div>
             <h2>No Quizzes Found</h2>
             <p>Create your first quiz to get started!</p>
             <Link to="/admin/quizzes/new" className="btn-primary">
-              Create Quiz
+              <FaPlusCircle /> Create Quiz
             </Link>
           </div>
         ) : (
@@ -121,10 +127,10 @@ function QuizLibrary() {
                 
                 <div className="quiz-meta">
                   <span className="quiz-stat">
-                    📝 {quiz.question_count || 0} questions
+                    <FaFileAlt /> {quiz.question_count || 0} questions
                   </span>
                   <span className="quiz-stat">
-                    🎮 {quiz.times_played} plays
+                    <FaGamepad /> {quiz.times_played} plays
                   </span>
                 </div>
 
@@ -137,19 +143,19 @@ function QuizLibrary() {
                     to={`/admin/quizzes/${quiz.id}`}
                     className="btn-edit"
                   >
-                    ✏️ Edit
+                    <FaEdit /> Edit
                   </Link>
                   <Link 
                     to={`/admin/quizzes/${quiz.id}/analytics`}
                     className="btn-analytics"
                   >
-                    📊 Stats
+                    <IoStatsChart /> Stats
                   </Link>
                   <button 
                     onClick={() => handleDelete(quiz.id, quiz.title)}
                     className="btn-delete"
                   >
-                    🗑️ Delete
+                    <FaTrash /> Delete
                   </button>
                 </div>
               </div>

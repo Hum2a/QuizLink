@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { FaGamepad, FaCrown, FaInfoCircle } from 'react-icons/fa';
 
 interface JoinScreenProps {
   onJoin: (name: string, isAdmin: boolean, roomCode?: string) => void;
@@ -36,7 +37,7 @@ function JoinScreen({ onJoin, isConnecting, error, defaultName = '' }: JoinScree
 
   return (
     <div className="join-screen">
-      <h1>🎉 QuizLink</h1>
+      <h1><FaGamepad className="title-icon" /> QuizLink</h1>
       <p className="subtitle">Join the fun and test your knowledge!</p>
       
       {error && (
@@ -82,7 +83,7 @@ function JoinScreen({ onJoin, isConnecting, error, defaultName = '' }: JoinScree
       </button>
 
       <div className="room-code">
-        <p>💡 Tip: Use the same room code to join together!</p>
+        <p><FaInfoCircle /> Tip: Use the same room code to join together!</p>
       </div>
     </div>
   );

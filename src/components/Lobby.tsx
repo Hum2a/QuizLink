@@ -1,4 +1,5 @@
 import type { Player } from '../types';
+import { FaCrown, FaUsers } from 'react-icons/fa';
 
 interface LobbyProps {
   players: Player[];
@@ -12,7 +13,7 @@ function Lobby({ players, isAdmin, onStartQuiz, roomCode }: LobbyProps) {
 
   return (
     <div className="lobby">
-      <h2>🎈 Waiting Room</h2>
+      <h2><FaUsers /> Waiting Room</h2>
       
       <div className="room-code">
         <p>Room Code: <strong>{roomCode}</strong></p>
@@ -27,7 +28,7 @@ function Lobby({ players, isAdmin, onStartQuiz, roomCode }: LobbyProps) {
           >
             <span className="player-name">{player.name}</span>
             {player.isAdmin && (
-              <span className="player-badge">👑 Host</span>
+              <span className="player-badge"><FaCrown /> Host</span>
             )}
           </div>
         ))}

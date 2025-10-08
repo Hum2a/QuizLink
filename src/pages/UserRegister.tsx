@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { userAuthService } from '../services/userAuth';
+import { FaGamepad, FaUser, FaEnvelope, FaLock, FaArrowRight } from 'react-icons/fa';
 import '../App.css';
 
 function UserRegister() {
@@ -55,7 +56,7 @@ function UserRegister() {
   return (
     <div className="app">
       <div className="join-screen">
-        <h1>🎉 Join QuizLink!</h1>
+        <h1><FaGamepad className="title-icon" /> Join QuizLink!</h1>
         <p className="subtitle">Create your account to start playing</p>
         
         {error && <div className="error-message">{error}</div>}
@@ -111,14 +112,14 @@ function UserRegister() {
             className="btn-player btn-full-width"
             disabled={loading}
           >
-            {loading ? 'Creating account...' : '🎮 Create Account & Start Playing'}
+            {loading ? 'Creating account...' : <><FaGamepad /> Create Account & Start Playing</>}
           </button>
         </form>
 
         <div className="auth-links">
           <p>Already have an account?</p>
           <Link to="/login" className="link-primary">
-            Login →
+            Login <FaArrowRight />
           </Link>
         </div>
 

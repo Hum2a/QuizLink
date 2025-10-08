@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Question } from '../services/api';
+import { FaPlusCircle, FaEdit, FaSave, FaTimes, FaCheckCircle } from 'react-icons/fa';
 
 interface QuestionFormProps {
   question: Question | null;
@@ -61,8 +62,8 @@ function QuestionForm({ question, onSave, onCancel, nextDisplayOrder }: Question
     <div className="modal-overlay" onClick={onCancel}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{question ? '✏️ Edit Question' : '➕ Add Question'}</h2>
-          <button onClick={onCancel} className="btn-close">✕</button>
+          <h2>{question ? <><FaEdit /> Edit Question</> : <><FaPlusCircle /> Add Question</>}</h2>
+          <button onClick={onCancel} className="btn-close" aria-label="Close modal"><FaTimes /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="question-form">
@@ -91,14 +92,15 @@ function QuestionForm({ question, onSave, onCancel, nextDisplayOrder }: Question
                   className="form-input"
                   required
                 />
-                <label className="radio-label">
+                <label className="radio-label" title={`Mark option ${String.fromCharCode(65 + index)} as correct`}>
                   <input
                     type="radio"
                     name="correct_answer"
                     checked={formData.correct_answer === index}
                     onChange={() => setFormData({ ...formData, correct_answer: index })}
+                    aria-label={`Mark option ${String.fromCharCode(65 + index)} as correct answer`}
                   />
-                  <span className="radio-checkmark">✓</span>
+                  <span className="radio-checkmark"><FaCheckCircle /></span>
                 </label>
               </div>
             ))}
@@ -121,7 +123,7 @@ function QuestionForm({ question, onSave, onCancel, nextDisplayOrder }: Question
               Cancel
             </button>
             <button type="submit" className="btn-primary">
-              💾 Save Question
+              <FaSave /> Save Question
             </button>
           </div>
         </form>

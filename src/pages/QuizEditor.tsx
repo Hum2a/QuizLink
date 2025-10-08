@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { quizAPI } from '../services/api';
 import type { QuizTemplate, Question } from '../services/api';
 import QuestionForm from '../components/QuestionForm';
+import { FaPlusCircle, FaSave, FaArrowLeft, FaEdit, FaArrowUp, FaArrowDown, FaTrash } from 'react-icons/fa';
+import { MdQuiz } from 'react-icons/md';
 import '../styles/admin.css';
 
 function QuizEditor() {
@@ -155,8 +157,8 @@ function QuizEditor() {
     <div className="admin-container">
       <header className="admin-header">
         <div>
-          <Link to="/admin/quizzes" className="btn-back">← Quiz Library</Link>
-          <h1>{isNewQuiz ? '➕ Create New Quiz' : '✏️ Edit Quiz'}</h1>
+          <Link to="/admin/quizzes" className="btn-back"><FaArrowLeft /> Quiz Library</Link>
+          <h1>{isNewQuiz ? <><FaPlusCircle /> Create New Quiz</> : <><FaEdit /> Edit Quiz</>}</h1>
         </div>
       </header>
 
@@ -229,16 +231,16 @@ function QuizEditor() {
             disabled={saving}
             className="btn-primary"
           >
-            {saving ? 'Saving...' : '💾 Save Quiz'}
+            {saving ? 'Saving...' : <><FaSave /> Save Quiz</>}
           </button>
         </div>
 
         {!isNewQuiz && (
           <div className="editor-section">
             <div className="section-header">
-              <h2>Questions ({questions.length})</h2>
+              <h2><MdQuiz /> Questions ({questions.length})</h2>
               <button onClick={handleAddQuestion} className="btn-primary">
-                ➕ Add Question
+                <FaPlusCircle /> Add Question
               </button>
             </div>
 
@@ -271,7 +273,7 @@ function QuizEditor() {
                         className="btn-icon"
                         title="Move up"
                       >
-                        ⬆️
+                        <FaArrowUp />
                       </button>
                       <button 
                         onClick={() => moveQuestion(index, 'down')}
@@ -279,21 +281,21 @@ function QuizEditor() {
                         className="btn-icon"
                         title="Move down"
                       >
-                        ⬇️
+                        <FaArrowDown />
                       </button>
                       <button 
                         onClick={() => handleEditQuestion(question)}
                         className="btn-icon"
                         title="Edit"
                       >
-                        ✏️
+                        <FaEdit />
                       </button>
                       <button 
                         onClick={() => handleDeleteQuestion(question.id)}
                         className="btn-icon btn-danger"
                         title="Delete"
                       >
-                        🗑️
+                        <FaTrash />
                       </button>
                     </div>
                   </div>

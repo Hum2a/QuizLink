@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/auth';
+import { FaUserPlus, FaArrowRight } from 'react-icons/fa';
+import { MdAdminPanelSettings } from 'react-icons/md';
 import '../styles/admin.css';
 
 function AdminRegister() {
@@ -44,7 +46,7 @@ function AdminRegister() {
   return (
     <div className="app">
       <div className="join-screen">
-        <h1>📝 Create Admin Account</h1>
+        <h1><MdAdminPanelSettings className="title-icon" /> Create Admin Account</h1>
         <p className="subtitle">Set up your QuizLink admin account</p>
         
         {error && <div className="error-message">{error}</div>}
@@ -89,14 +91,14 @@ function AdminRegister() {
             className="btn-primary btn-full-width"
             disabled={loading}
           >
-            {loading ? 'Creating account...' : 'Create Account'}
+            {loading ? 'Creating account...' : <><FaUserPlus /> Create Account</>}
           </button>
         </form>
 
         <div className="auth-links">
           <p>Already have an account?</p>
           <Link to="/admin/login" className="link-primary">
-            Login →
+            Login <FaArrowRight />
           </Link>
         </div>
 

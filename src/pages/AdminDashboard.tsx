@@ -1,6 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { authService } from '../services/auth';
+import { FaChartLine, FaBook, FaPlusCircle, FaGamepad, FaSignOutAlt, FaArrowLeft, FaUser } from 'react-icons/fa';
+import { MdDashboard, MdQuiz } from 'react-icons/md';
+import { IoStatsChart } from 'react-icons/io5';
 import '../styles/admin.css';
 
 function AdminDashboard() {
@@ -27,38 +30,38 @@ function AdminDashboard() {
     <div className="admin-container">
       <header className="admin-header">
         <div>
-          <h1>🎯 QuizLink Admin</h1>
-          {user && <p className="user-email">Logged in as: {user.name}</p>}
+          <h1><MdDashboard className="title-icon" /> QuizLink Admin</h1>
+          {user && <p className="user-email"><FaUser /> {user.name}</p>}
         </div>
         <div className="header-actions">
-          <Link to="/" className="btn-secondary">← Back to Quiz</Link>
+          <Link to="/" className="btn-secondary"><FaArrowLeft /> Back to Quiz</Link>
           <button onClick={handleLogout} className="btn-secondary">
-            🚪 Logout
+            <FaSignOutAlt /> Logout
           </button>
         </div>
       </header>
 
       <div className="admin-dashboard">
         <div className="dashboard-welcome">
-          <h2>Welcome to QuizLink Admin, {user?.name || 'User'}! 👋</h2>
+          <h2>Welcome to QuizLink Admin, {user?.name || 'User'}!</h2>
           <p>Manage your quizzes, create new ones, and view analytics all in one place.</p>
         </div>
 
         <div className="dashboard-cards">
           <Link to="/admin/quizzes" className="dashboard-card">
-            <div className="card-icon">📚</div>
+            <div className="card-icon"><FaBook size={48} /></div>
             <h3>Quiz Library</h3>
             <p>Browse and manage all your quizzes</p>
           </Link>
 
           <Link to="/admin/quizzes/new" className="dashboard-card">
-            <div className="card-icon">➕</div>
+            <div className="card-icon"><FaPlusCircle size={48} /></div>
             <h3>Create Quiz</h3>
             <p>Build a new quiz from scratch</p>
           </Link>
 
           <Link to="/admin/analytics" className="dashboard-card">
-            <div className="card-icon">📊</div>
+            <div className="card-icon"><IoStatsChart size={48} /></div>
             <h3>Analytics</h3>
             <p>View quiz performance and stats</p>
           </Link>
