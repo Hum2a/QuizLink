@@ -1,0 +1,45 @@
+name = "quizlink-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Your Cloudflare Account ID
+# Choose one of your accounts:
+# - Humzab1711@hotmail.com's Account: e6d408ebc85e159e6e22ee963641d342
+# - LifeSmart: 36b0795316e93e38794cd1fd29009be3
+account_id = "e6d408ebc85e159e6e22ee963641d342"
+
+# Durable Objects for real-time game state
+[[durable_objects.bindings]]
+name = "GAME_ROOM"
+class_name = "GameRoom"
+script_name = "quizlink-api"
+
+# Migrations (needed for Durable Objects on free plan)
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameRoom"]
+
+# Environment variables (non-sensitive)
+[vars]
+ENVIRONMENT = "production"
+
+# Database binding (Neon via Hyperdrive for connection pooling)
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "affe1c32970d4c4a8175988fbfd8fece"
+
+# Development environment
+[env.development]
+name = "quizlink-api-dev"
+vars = { ENVIRONMENT = "development" }
+
+# Production environment
+[env.production]
+name = "quizlink-api"
+vars = { ENVIRONMENT = "production" }
+
+# Secrets (set via: wrangler secret put SECRET_NAME)
+# - DATABASE_URL: Your Neon PostgreSQL connection string
+#   Run: wrangler secret put DATABASE_URL
+#   Then paste: postgresql://user:password@host/dbname?sslmode=require
