@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/auth';
-import { FaLock, FaSignInAlt, FaArrowRight } from 'react-icons/fa';
+import { FaSignInAlt, FaArrowRight } from 'react-icons/fa';
 import { MdAdminPanelSettings } from 'react-icons/md';
 import '../styles/admin.css';
 

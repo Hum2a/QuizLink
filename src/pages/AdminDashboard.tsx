@@ -1,8 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { authService } from '../services/auth';
-import { FaChartLine, FaBook, FaPlusCircle, FaGamepad, FaSignOutAlt, FaArrowLeft, FaUser } from 'react-icons/fa';
-import { MdDashboard, MdQuiz } from 'react-icons/md';
+import { FaBook, FaPlusCircle, FaSignOutAlt, FaArrowLeft, FaUser } from 'react-icons/fa';
+import { MdDashboard } from 'react-icons/md';
 import { IoStatsChart } from 'react-icons/io5';
 import '../styles/admin.css';
 

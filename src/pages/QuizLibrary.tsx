@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { quizAPI } from '../services/api';
 import type { QuizTemplate } from '../services/api';
-import { FaBook, FaPlusCircle, FaEdit, FaTrash, FaSearch, FaArrowLeft, FaFileAlt } from 'react-icons/fa';
+import { FaBook, FaPlusCircle, FaEdit, FaTrash, FaSearch, FaArrowLeft, FaFileAlt, FaGamepad } from 'react-icons/fa';
 import { IoStatsChart } from 'react-icons/io5';
 import { MdQuiz } from 'react-icons/md';
 import '../styles/admin.css';

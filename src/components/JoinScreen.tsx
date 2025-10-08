@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FaGamepad, FaCrown, FaInfoCircle } from 'react-icons/fa';
+import { FaGamepad, FaInfoCircle } from 'react-icons/fa';
 
 interface JoinScreenProps {
   onJoin: (name: string, isAdmin: boolean, roomCode?: string) => void;

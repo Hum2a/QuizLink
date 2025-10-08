@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { userAuthService } from '../services/userAuth';
-import { FaGamepad, FaUser, FaEnvelope, FaLock, FaArrowRight } from 'react-icons/fa';
+import { FaGamepad, FaArrowRight } from 'react-icons/fa';
 import '../App.css';
 
 function UserRegister() {
