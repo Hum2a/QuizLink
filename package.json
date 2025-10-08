@@ -1,7 +1,7 @@
 {
   "name": "quizlink",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,13 @@
     "dev:worker": "cd workers && npm run dev",
     "deploy:worker": "cd workers && npm run deploy",
     "deploy:pages": "npm run build:prod && npx wrangler pages deploy dist --project-name=quizlink",
-    "setup:env": "node -e \"require('fs').copyFileSync('env.local.template', '.env.local'); require('fs').copyFileSync('env.production.template', '.env.production'); console.log('✅ Environment files created!')\""
+    "deploy:all": "npm run deploy:worker && npm run deploy:pages",
+    "setup:env": "node -e \"require('fs').copyFileSync('env.local.template', '.env.local'); require('fs').copyFileSync('env.production.template', '.env.production'); console.log('✅ Environment files created!')\"",
+    "release:patch": "bash release.sh --patch",
+    "release:minor": "bash release.sh --minor",
+    "release:major": "bash release.sh --major",
+    "release:current": "bash release.sh --current",
+    "test": "echo \"No tests yet\""
   },
   "dependencies": {
     "react": "^19.1.1",

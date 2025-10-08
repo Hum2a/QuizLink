@@ -1,0 +1,92 @@
+name: Create Release
+
+on:
+    push:
+        tags:
+            - "v*"
+
+permissions:
+    contents: write
+
+jobs:
+    create-release:
+        name: Create GitHub Release
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+
+            - name: Get version from tag
+              id: get_version
+              run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+            - name: Generate changelog
+              id: changelog
+              run: |
+                  # Get previous tag
+                  PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+                  # Generate changelog
+                  if [ -z "$PREV_TAG" ]; then
+                    CHANGELOG=$(git log --pretty=format:"- %s (%h)" HEAD | head -20)
+                  else
+                    CHANGELOG=$(git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD)
+                  fi
+
+                  # Save to output
+                  {
+                    echo 'changelog<<EOF'
+                    echo "$CHANGELOG"
+                    echo 'EOF'
+                  } >> "$GITHUB_OUTPUT"
+
+            - name: Check if prerelease
+              id: prerelease
+              run: |
+                  if [[ "${{ steps.get_version.outputs.VERSION }}" =~ -[a-zA-Z] ]]; then
+                    echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Create Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: ${{ steps.get_version.outputs.VERSION }}
+                  name: QuizLink ${{ steps.get_version.outputs.VERSION }}
+                  body: |
+                      ## 🎉 QuizLink Release ${{ steps.get_version.outputs.VERSION }}
+
+                      ### 📝 Changes in this release:
+
+                      ${{ steps.changelog.outputs.changelog }}
+
+                      ---
+
+                      ### 🌐 Deployment
+
+                      - **Live App:** https://quizlink.pages.dev
+                      - **API:** https://quizlink-api.humzab1711.workers.dev
+                      - **Admin:** https://quizlink.pages.dev/admin
+
+                      ### 🚀 Get Started
+
+                      1. Visit https://quizlink.pages.dev
+                      2. Create your account
+                      3. Join or host a quiz!
+
+                      ### 📚 Documentation
+
+                      - [User Guide](https://github.com/${{ github.repository }}/blob/${{ steps.get_version.outputs.VERSION }}/START_HERE.md)
+                      - [Admin Guide](https://github.com/${{ github.repository }}/blob/${{ steps.get_version.outputs.VERSION }}/ADMIN_SETUP.md)
+                      - [Authentication](https://github.com/${{ github.repository }}/blob/${{ steps.get_version.outputs.VERSION }}/AUTH_GUIDE.md)
+
+                      ---
+
+                      **Full Changelog:** https://github.com/${{ github.repository }}/compare/${{ steps.get_version.outputs.VERSION }}
+                  draft: false
+                  prerelease: ${{ steps.prerelease.outputs.IS_PRERELEASE }}
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
