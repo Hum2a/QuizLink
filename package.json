@@ -13,7 +13,7 @@
     "deploy:worker": "cd workers && npm run deploy",
     "deploy:pages": "npm run build:prod && npx wrangler pages deploy dist --project-name=quizlink",
     "deploy:all": "npm run deploy:worker && npm run deploy:pages",
-    "setup:env": "node -e \"require('fs').copyFileSync('env.local.template', '.env.local'); require('fs').copyFileSync('env.production.template', '.env.production'); console.log('✅ Environment files created!')\"",
+    "setup:env": "node -e \"const fs = require('fs'); const path = require('path'); const configDir = 'config'; if(fs.existsSync(path.join(configDir, 'env.local.template'))) fs.copyFileSync(path.join(configDir, 'env.local.template'), '.env.local'); if(fs.existsSync(path.join(configDir, 'env.production.template'))) fs.copyFileSync(path.join(configDir, 'env.production.template'), '.env.production'); console.log('✅ Environment files created!')\"",
     "release:patch": "bash release.sh --patch",
     "release:minor": "bash release.sh --minor",
     "release:major": "bash release.sh --major",

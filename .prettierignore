@@ -1,0 +1,19 @@
+# Ignore build outputs
+dist/
+build/
+.wrangler/
+
+# Ignore dependencies
+node_modules/
+
+# Ignore generated files
+*.log
+*.lock
+
+# Ignore config files
+.env*
+wrangler.toml
+
+# Ignore markdown (formatting issues)
+*.md
+
