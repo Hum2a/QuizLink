@@ -33,7 +33,7 @@ export class AdminAPI {
   // Quiz Templates
   async getAllQuizTemplates(): Promise<QuizTemplate[]> {
     const result = await this.sql`
-      SELECT 
+      SELECT
         qt.*,
         COUNT(qb.id) as question_count
       FROM quiz_templates qt
@@ -44,13 +44,49 @@ export class AdminAPI {
     `;
     return result.map((row: any) => ({
       ...row,
-      question_count: parseInt(row.question_count) || 0
+      question_count: parseInt(row.question_count) || 0,
+    }));
+  }
+
+  // Get user's quiz templates
+  async getUserQuizzes(userId: string): Promise<QuizTemplate[]> {
+    const result = await this.sql`
+      SELECT
+        qt.*,
+        COUNT(qb.id) as question_count
+      FROM quiz_templates qt
+      LEFT JOIN question_bank qb ON qt.id = qb.quiz_template_id
+      WHERE qt.created_by = ${userId}
+      GROUP BY qt.id
+      ORDER BY qt.created_at DESC
+    `;
+    return result.map((row: any) => ({
+      ...row,
+      question_count: parseInt(row.question_count) || 0,
+    }));
+  }
+
+  // Get public quiz templates
+  async getPublicQuizzes(): Promise<QuizTemplate[]> {
+    const result = await this.sql`
+      SELECT
+        qt.*,
+        COUNT(qb.id) as question_count
+      FROM quiz_templates qt
+      LEFT JOIN question_bank qb ON qt.id = qb.quiz_template_id
+      WHERE qt.is_public = true
+      GROUP BY qt.id
+      ORDER BY qt.times_played DESC, qt.created_at DESC
+    `;
+    return result.map((row: any) => ({
+      ...row,
+      question_count: parseInt(row.question_count) || 0,
     }));
   }
 
   async getQuizTemplate(id: string): Promise<QuizTemplate | null> {
     const result = await this.sql`
-      SELECT 
+      SELECT
         qt.*,
         COUNT(qb.id) as question_count
       FROM quiz_templates qt
@@ -58,16 +94,21 @@ export class AdminAPI {
       WHERE qt.id = ${id}
       GROUP BY qt.id
     `;
-    
+
     if (result.length === 0) return null;
-    
+
     return {
       ...result[0],
-      question_count: parseInt(result[0].question_count) || 0
+      question_count: parseInt(result[0].question_count) || 0,
     };
   }
 
-  async createQuizTemplate(template: Omit<QuizTemplate, 'id' | 'created_at' | 'updated_at' | 'times_played'>): Promise<string> {
+  async createQuizTemplate(
+    template: Omit<
+      QuizTemplate,
+      'id' | 'created_at' | 'updated_at' | 'times_played'
+    >
+  ): Promise<string> {
     const result = await this.sql`
       INSERT INTO quiz_templates (title, description, category, difficulty, is_public)
       VALUES (${template.title}, ${template.description}, ${template.category}, ${template.difficulty}, ${template.is_public})
@@ -76,10 +117,13 @@ export class AdminAPI {
     return result[0].id;
   }
 
-  async updateQuizTemplate(id: string, template: Partial<QuizTemplate>): Promise<void> {
+  async updateQuizTemplate(
+    id: string,
+    template: Partial<QuizTemplate>
+  ): Promise<void> {
     await this.sql`
       UPDATE quiz_templates
-      SET 
+      SET
         title = COALESCE(${template.title}, title),
         description = COALESCE(${template.description}, description),
         category = COALESCE(${template.category}, category),
@@ -101,10 +145,11 @@ export class AdminAPI {
       WHERE quiz_template_id = ${quizTemplateId}
       ORDER BY display_order ASC
     `;
-    
+
     return result.map((row: any) => ({
       ...row,
-      options: typeof row.options === 'string' ? JSON.parse(row.options) : row.options
+      options:
+        typeof row.options === 'string' ? JSON.parse(row.options) : row.options,
     }));
   }
 
@@ -126,21 +171,29 @@ export class AdminAPI {
     return result[0].id;
   }
 
-  async updateQuestion(id: string, question: Partial<QuestionBankItem>): Promise<void> {
+  async updateQuestion(
+    id: string,
+    question: Partial<QuestionBankItem>
+  ): Promise<void> {
     const updates: any = {};
-    
+
     if (question.question_text) updates.question_text = question.question_text;
     if (question.options) updates.options = JSON.stringify(question.options);
-    if (question.correct_answer !== undefined) updates.correct_answer = question.correct_answer;
-    if (question.explanation !== undefined) updates.explanation = question.explanation;
-    if (question.display_order !== undefined) updates.display_order = question.display_order;
+    if (question.correct_answer !== undefined)
+      updates.correct_answer = question.correct_answer;
+    if (question.explanation !== undefined)
+      updates.explanation = question.explanation;
+    if (question.display_order !== undefined)
+      updates.display_order = question.display_order;
 
     if (Object.keys(updates).length > 0) {
       await this.sql`
         UPDATE question_bank
-        SET 
+        SET
           question_text = COALESCE(${question.question_text}, question_text),
-          options = COALESCE(${question.options ? JSON.stringify(question.options) : null}, options),
+          options = COALESCE(${
+            question.options ? JSON.stringify(question.options) : null
+          }, options),
           correct_answer = COALESCE(${question.correct_answer}, correct_answer),
           explanation = COALESCE(${question.explanation}, explanation),
           display_order = COALESCE(${question.display_order}, display_order),
@@ -154,7 +207,10 @@ export class AdminAPI {
     await this.sql`DELETE FROM question_bank WHERE id = ${id}`;
   }
 
-  async reorderQuestions(quizTemplateId: string, questionIds: string[]): Promise<void> {
+  async reorderQuestions(
+    quizTemplateId: string,
+    questionIds: string[]
+  ): Promise<void> {
     // Update display_order for each question
     for (let i = 0; i < questionIds.length; i++) {
       await this.sql`
@@ -168,7 +224,7 @@ export class AdminAPI {
   // Analytics
   async getQuizAnalytics(quizTemplateId: string) {
     const games = await this.sql`
-      SELECT 
+      SELECT
         COUNT(*) as total_games,
         AVG(EXTRACT(EPOCH FROM (ended_at - started_at))) as avg_duration,
         COUNT(DISTINCT host_name) as unique_hosts
@@ -192,7 +248,7 @@ export class AdminAPI {
       total_games: parseInt(games[0]?.total_games) || 0,
       avg_duration: Math.round(games[0]?.avg_duration || 0),
       unique_hosts: parseInt(games[0]?.unique_hosts) || 0,
-      top_scores: topScores
+      top_scores: topScores,
     };
   }
 
@@ -207,4 +263,3 @@ export class AdminAPI {
     return result.map((row: any) => row.category);
   }
 }
-
