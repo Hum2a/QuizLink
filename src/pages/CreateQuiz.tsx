@@ -371,6 +371,7 @@ function CreateQuiz() {
               setShowQuestionForm(false);
               setEditingQuestion(null);
             }}
+            nextDisplayOrder={questions.length + 1}
           />
         )}
       </div>
