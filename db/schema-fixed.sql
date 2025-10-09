@@ -26,11 +26,23 @@ CREATE TABLE IF NOT EXISTS user_accounts (
   last_active TIMESTAMP DEFAULT NOW()
 );
 
--- User stats - aggregate statistics per user (quiz_templates reference added later)
+-- User game history - links users to games they've played
+CREATE TABLE IF NOT EXISTS user_game_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES user_accounts(id) ON DELETE CASCADE,
+  game_id UUID REFERENCES games(id) ON DELETE CASCADE,
+  player_id UUID REFERENCES players(id) ON DELETE CASCADE,
+  score INTEGER NOT NULL,
+  rank INTEGER,
+  played_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, game_id)
+);
+
+-- User stats - aggregate statistics per user
 CREATE TABLE IF NOT EXISTS user_stats (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES user_accounts(id) ON DELETE CASCADE,
-  quiz_template_id UUID,
+  quiz_template_id UUID REFERENCES quiz_templates(id),
   times_played INTEGER DEFAULT 0,
   best_score INTEGER DEFAULT 0,
   avg_score INTEGER DEFAULT 0,
@@ -119,18 +131,6 @@ CREATE TABLE IF NOT EXISTS answers (
   UNIQUE(player_id, question_id)
 );
 
--- User game history - links users to games they've played
-CREATE TABLE IF NOT EXISTS user_game_history (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES user_accounts(id) ON DELETE CASCADE,
-  game_id UUID REFERENCES games(id) ON DELETE CASCADE,
-  player_id UUID REFERENCES players(id) ON DELETE CASCADE,
-  score INTEGER NOT NULL,
-  rank INTEGER,
-  played_at TIMESTAMP DEFAULT NOW(),
-  UNIQUE(user_id, game_id)
-);
-
 -- Game history for analytics
 CREATE TABLE IF NOT EXISTS game_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -140,10 +140,6 @@ CREATE TABLE IF NOT EXISTS game_history (
   total_questions INTEGER,
   completed_at TIMESTAMP DEFAULT NOW()
 );
-
--- Add foreign key constraints that were deferred
-ALTER TABLE user_stats ADD CONSTRAINT fk_user_stats_quiz_template
-  FOREIGN KEY (quiz_template_id) REFERENCES quiz_templates(id);
 
 -- Indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_quiz_templates_category ON quiz_templates(category);
