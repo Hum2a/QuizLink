@@ -15,7 +15,7 @@ function UserLogin() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     try {
       await userAuthService.login(emailOrUsername, password);
       navigate('/');
@@ -29,35 +29,43 @@ function UserLogin() {
   return (
     <div className="app">
       <div className="join-screen">
-        <h1><FaGamepad className="title-icon" /> Welcome Back!</h1>
+        <h1>
+          <FaGamepad className="title-icon" /> Welcome Back!
+        </h1>
         <p className="subtitle">Login to QuizLink</p>
-        
+
         {error && <div className="error-message">{error}</div>}
-        
+
         <form onSubmit={handleLogin}>
           <input
             type="text"
             placeholder="Email or Username"
             value={emailOrUsername}
-            onChange={(e) => setEmailOrUsername(e.target.value)}
+            onChange={e => setEmailOrUsername(e.target.value)}
             required
             autoFocus
           />
-          
+
           <input
             type="password"
             placeholder="Password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             required
           />
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="btn-player btn-full-width"
             disabled={loading}
           >
-            {loading ? 'Logging in...' : <><FaSignInAlt /> Login & Play</>}
+            {loading ? (
+              'Logging in...'
+            ) : (
+              <>
+                <FaSignInAlt /> Login & Play
+              </>
+            )}
           </button>
         </form>
 
@@ -65,6 +73,12 @@ function UserLogin() {
           <p>Don't have an account?</p>
           <Link to="/register" className="link-primary">
             Create Account <FaArrowRight />
+          </Link>
+        </div>
+
+        <div className="auth-links">
+          <Link to="/forgot-password" className="link-secondary">
+            Forgot Password?
           </Link>
         </div>
 
@@ -79,4 +93,3 @@ function UserLogin() {
 }
 
 export default UserLogin;
-

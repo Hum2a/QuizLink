@@ -383,6 +383,72 @@ async function handleUserAuthAPI(
       });
     }
 
+    // POST /api/auth/user/request-password-reset
+    if (
+      url.pathname === '/api/auth/user/request-password-reset' &&
+      request.method === 'POST'
+    ) {
+      const body = (await request.json()) as { email: string };
+
+      if (!body.email) {
+        return new Response(JSON.stringify({ error: 'Email is required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      try {
+        const result = await userAuth.requestPasswordReset(body.email);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        return new Response(
+          JSON.stringify({ error: 'Failed to process password reset request' }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    }
+
+    // POST /api/auth/user/reset-password
+    if (
+      url.pathname === '/api/auth/user/reset-password' &&
+      request.method === 'POST'
+    ) {
+      const body = (await request.json()) as {
+        token: string;
+        password: string;
+      };
+
+      if (!body.token || !body.password) {
+        return new Response(
+          JSON.stringify({ error: 'Token and password are required' }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      try {
+        const result = await userAuth.resetPassword(body.token, body.password);
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        return new Response(
+          JSON.stringify({ error: 'Failed to reset password' }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    }
+
     return new Response(JSON.stringify({ error: 'Endpoint not found' }), {
       status: 404,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

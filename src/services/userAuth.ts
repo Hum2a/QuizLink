@@ -25,11 +25,21 @@ class UserAuthService {
     this.baseURL = `${config.API_URL}/api/auth/user`;
   }
 
-  async register(email: string, password: string, username: string, displayName: string): Promise<UserAuthResponse> {
+  async register(
+    email: string,
+    password: string,
+    username: string,
+    displayName: string
+  ): Promise<UserAuthResponse> {
     const response = await fetch(`${this.baseURL}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, username, display_name: displayName })
+      body: JSON.stringify({
+        email,
+        password,
+        username,
+        display_name: displayName,
+      }),
     });
 
     if (!response.ok) {
@@ -43,11 +53,14 @@ class UserAuthService {
     return data;
   }
 
-  async login(emailOrUsername: string, password: string): Promise<UserAuthResponse> {
+  async login(
+    emailOrUsername: string,
+    password: string
+  ): Promise<UserAuthResponse> {
     const response = await fetch(`${this.baseURL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emailOrUsername, password })
+      body: JSON.stringify({ emailOrUsername, password }),
     });
 
     if (!response.ok) {
@@ -68,8 +81,8 @@ class UserAuthService {
     try {
       const response = await fetch(`${this.baseURL}/me`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
@@ -94,8 +107,8 @@ class UserAuthService {
     try {
       const response = await fetch(`${this.baseURL}/profile`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) return null;
@@ -137,7 +150,33 @@ class UserAuthService {
   private setUser(user: User) {
     localStorage.setItem(this.userKey, JSON.stringify(user));
   }
+
+  async requestPasswordReset(
+    email: string
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`${this.baseURL}/request-password-reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await response.json();
+    return data;
+  }
+
+  async resetPassword(
+    token: string,
+    password: string
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`${this.baseURL}/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password }),
+    });
+
+    const data = await response.json();
+    return data;
+  }
 }
 
 export const userAuthService = new UserAuthService();
-

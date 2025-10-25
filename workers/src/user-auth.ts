@@ -41,7 +41,7 @@ export class UserAuth {
       email: user.email,
       username: user.username,
       iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60) // 30 days
+      exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 days
     };
 
     const encodedHeader = btoa(JSON.stringify(header));
@@ -63,7 +63,9 @@ export class UserAuth {
       encoder.encode(signatureInput)
     );
 
-    const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)));
+    const encodedSignature = btoa(
+      String.fromCharCode(...new Uint8Array(signature))
+    );
     return `${signatureInput}.${encodedSignature}`;
   }
 
@@ -73,7 +75,7 @@ export class UserAuth {
       if (parts.length !== 3) return null;
 
       const payload = JSON.parse(atob(parts[1]));
-      
+
       if (payload.exp < Math.floor(Date.now() / 1000)) {
         return null;
       }
@@ -84,7 +86,12 @@ export class UserAuth {
     }
   }
 
-  async register(email: string, password: string, username: string, displayName: string): Promise<{ user: User; token: string }> {
+  async register(
+    email: string,
+    password: string,
+    username: string,
+    displayName: string
+  ): Promise<{ user: User; token: string }> {
     // Check if email exists
     const existingEmail = await this.sql`
       SELECT id FROM user_accounts WHERE email = ${email}
@@ -102,9 +109,18 @@ export class UserAuth {
     }
 
     const passwordHash = await this.hashPassword(password);
-    
+
     // Generate random avatar color
-    const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#feca57', '#ff6348'];
+    const colors = [
+      '#667eea',
+      '#764ba2',
+      '#f093fb',
+      '#4facfe',
+      '#43e97b',
+      '#fa709a',
+      '#feca57',
+      '#ff6348',
+    ];
     const avatarColor = colors[Math.floor(Math.random() * colors.length)];
 
     const result = await this.sql`
@@ -119,7 +135,10 @@ export class UserAuth {
     return { user, token };
   }
 
-  async login(emailOrUsername: string, password: string): Promise<{ user: User; token: string } | null> {
+  async login(
+    emailOrUsername: string,
+    password: string
+  ): Promise<{ user: User; token: string } | null> {
     const result = await this.sql`
       SELECT * FROM user_accounts
       WHERE email = ${emailOrUsername} OR username = ${emailOrUsername}
@@ -147,7 +166,7 @@ export class UserAuth {
       avatar_color: userData.avatar_color,
       total_games_played: userData.total_games_played,
       total_score: userData.total_score,
-      highest_score: userData.highest_score
+      highest_score: userData.highest_score,
     };
 
     const token = await this.generateToken(user);
@@ -159,7 +178,7 @@ export class UserAuth {
     if (!payload) return null;
 
     const result = await this.sql`
-      SELECT id, email, username, display_name, avatar_color, 
+      SELECT id, email, username, display_name, avatar_color,
              total_games_played, total_score, highest_score
       FROM user_accounts
       WHERE id = ${payload.userId}
@@ -203,7 +222,7 @@ export class UserAuth {
     return {
       user: user[0],
       recent_games: recentGames,
-      quiz_stats: quizStats
+      quiz_stats: quizStats,
     };
   }
 
@@ -216,5 +235,101 @@ export class UserAuth {
 
     return parts[1];
   }
-}
 
+  async requestPasswordReset(
+    email: string
+  ): Promise<{ success: boolean; message: string }> {
+    // Check if user exists
+    const result = await this.sql`
+      SELECT id, email, display_name FROM user_accounts WHERE email = ${email}
+    `;
+
+    if (result.length === 0) {
+      // Don't reveal if email exists for security
+      return {
+        success: true,
+        message:
+          'If an account with that email exists, a password reset link has been sent.',
+      };
+    }
+
+    const user = result[0];
+
+    // Generate reset token (expires in 1 hour)
+    const resetToken = await this.generateResetToken(user.id);
+
+    // Store reset token in database
+    await this.sql`
+      INSERT INTO password_reset_tokens (user_id, token, expires_at, created_at)
+      VALUES (${user.id}, ${resetToken}, NOW() + INTERVAL '1 hour', NOW())
+      ON CONFLICT (user_id) DO UPDATE SET
+        token = ${resetToken},
+        expires_at = NOW() + INTERVAL '1 hour',
+        created_at = NOW()
+    `;
+
+    // In a real app, you'd send an email here
+    // For now, we'll just return the token for testing
+    console.log(`Password reset token for ${user.email}: ${resetToken}`);
+
+    return {
+      success: true,
+      message: `Password reset token generated. In production, this would be sent via email. Token: ${resetToken}`,
+    };
+  }
+
+  async resetPassword(
+    token: string,
+    newPassword: string
+  ): Promise<{ success: boolean; message: string }> {
+    if (newPassword.length < 6) {
+      return {
+        success: false,
+        message: 'Password must be at least 6 characters long',
+      };
+    }
+
+    // Verify token
+    const result = await this.sql`
+      SELECT prt.user_id, prt.expires_at, ua.email
+      FROM password_reset_tokens prt
+      JOIN user_accounts ua ON prt.user_id = ua.id
+      WHERE prt.token = ${token} AND prt.expires_at > NOW()
+    `;
+
+    if (result.length === 0) {
+      return { success: false, message: 'Invalid or expired reset token' };
+    }
+
+    const { user_id, email } = result[0];
+
+    // Hash new password
+    const passwordHash = await this.hashPassword(newPassword);
+
+    // Update password
+    await this.sql`
+      UPDATE user_accounts
+      SET password_hash = ${passwordHash}, last_active = NOW()
+      WHERE id = ${user_id}
+    `;
+
+    // Delete used token
+    await this.sql`
+      DELETE FROM password_reset_tokens WHERE token = ${token}
+    `;
+
+    return {
+      success: true,
+      message: `Password successfully reset for ${email}`,
+    };
+  }
+
+  private async generateResetToken(userId: string): Promise<string> {
+    // Generate a random token
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join(
+      ''
+    );
+  }
+}

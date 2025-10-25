@@ -141,6 +141,16 @@ CREATE TABLE IF NOT EXISTS game_history (
   completed_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Password reset tokens table
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES user_accounts(id) ON DELETE CASCADE,
+  token VARCHAR(255) UNIQUE NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
 -- Add foreign key constraints that were deferred
 ALTER TABLE user_stats ADD CONSTRAINT fk_user_stats_quiz_template
   FOREIGN KEY (quiz_template_id) REFERENCES quiz_templates(id);

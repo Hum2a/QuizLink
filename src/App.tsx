@@ -9,6 +9,8 @@ import AdminLogin from './pages/AdminLogin';
 import AdminRegister from './pages/AdminRegister';
 import UserLogin from './pages/UserLogin';
 import UserRegister from './pages/UserRegister';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import UserProfile from './pages/UserProfile';
 import UserDashboard from './pages/UserDashboard';
 import MyQuizzes from './pages/MyQuizzes';
@@ -24,6 +26,8 @@ function App() {
       {/* User auth routes (public) */}
       <Route path="/login" element={<UserLogin />} />
       <Route path="/register" element={<UserRegister />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* User dashboard and features */}
       <Route path="/" element={<UserDashboard />} />
