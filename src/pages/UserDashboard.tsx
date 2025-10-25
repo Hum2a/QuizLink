@@ -33,26 +33,6 @@ function UserDashboard() {
     error: permissionsError,
   } = usePermissions();
 
-  // Debug logging
-  useEffect(() => {
-    console.log('🔍 Debug Info:');
-    console.log('- User:', user);
-    console.log('- Permissions:', permissions);
-    console.log('- Permissions Loading:', permissionsLoading);
-    console.log('- Permissions Error:', permissionsError);
-    console.log('- Is Developer:', isDeveloper());
-    console.log('- Is Admin:', isAdmin());
-    console.log('- Is Developer or Admin:', isDeveloperOrAdmin());
-  }, [
-    user,
-    permissions,
-    permissionsLoading,
-    permissionsError,
-    isDeveloper,
-    isAdmin,
-    isDeveloperOrAdmin,
-  ]);
-
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -199,40 +179,6 @@ function UserDashboard() {
               <p>View your game history and achievements</p>
             </Link>
           </div>
-        </div>
-
-        {/* Debug Section - Remove this after testing */}
-        <div
-          className="debug-section"
-          style={{
-            background: '#f0f0f0',
-            padding: '1rem',
-            margin: '1rem 0',
-            borderRadius: '8px',
-          }}
-        >
-          <h3>🔍 Debug Info:</h3>
-          <p>
-            <strong>Permissions Loading:</strong>{' '}
-            {permissionsLoading ? 'Yes' : 'No'}
-          </p>
-          <p>
-            <strong>Permissions Error:</strong> {permissionsError || 'None'}
-          </p>
-          <p>
-            <strong>Permissions Data:</strong>{' '}
-            {permissions ? JSON.stringify(permissions, null, 2) : 'None'}
-          </p>
-          <p>
-            <strong>Is Developer:</strong> {isDeveloper() ? 'Yes' : 'No'}
-          </p>
-          <p>
-            <strong>Is Admin:</strong> {isAdmin() ? 'Yes' : 'No'}
-          </p>
-          <p>
-            <strong>Is Developer or Admin:</strong>{' '}
-            {isDeveloperOrAdmin() ? 'Yes' : 'No'}
-          </p>
         </div>
 
         {/* Admin Features - Only show for developers/admins */}

@@ -857,8 +857,8 @@ async function handleAdminAPI(
   const rolePermissions = new RolePermissions(env.DATABASE_URL);
   const userRoles = await rolePermissions.getUserRoles(payload.userId);
 
-  const hasAdminAccess = userRoles.some(role =>
-    role.name === 'admin' || role.name === 'developer'
+  const hasAdminAccess = userRoles.some(
+    role => role.name === 'admin' || role.name === 'developer'
   );
 
   if (!hasAdminAccess) {
@@ -1065,7 +1065,11 @@ async function handleAdminAPI(
         userId: string;
         roleName: string;
       };
-      await rolePermissions.assignRole(body.userId, body.roleName, payload.userId);
+      await rolePermissions.assignRole(
+        body.userId,
+        body.roleName,
+        payload.userId
+      );
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -1080,7 +1084,11 @@ async function handleAdminAPI(
         userId: string;
         roleName: string;
       };
-      await rolePermissions.assignRole(body.userId, body.roleName, payload.userId);
+      await rolePermissions.assignRole(
+        body.userId,
+        body.roleName,
+        payload.userId
+      );
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
