@@ -27,15 +27,22 @@ export class WebSocketClient {
 
         this.ws.onopen = () => {
           console.log('WebSocket connected, readyState:', this.ws?.readyState);
+          console.log('WebSocket URL:', this.ws?.url);
+          console.log('WebSocket protocol:', this.ws?.protocol);
           this.reconnectAttempts = 0;
           resolve();
         };
 
         this.ws.onmessage = event => {
           try {
+            console.log('=== WebSocket Message Received ===');
             console.log('Raw WebSocket message received:', event.data);
+            console.log('Message type:', typeof event.data);
+            console.log('Message length:', event.data.length);
             const message: WebSocketMessage = JSON.parse(event.data);
             console.log('Parsed WebSocket message:', message);
+            console.log('Message type:', message.type);
+            console.log('Message payload:', message.payload);
             const handler = this.messageHandlers.get(message.type);
             if (handler) {
               console.log('Found handler for message type:', message.type);
@@ -49,8 +56,10 @@ export class WebSocketClient {
                 catchAllHandler(message);
               }
             }
+            console.log('=== End WebSocket Message ===');
           } catch (error) {
             console.error('Error parsing message:', error);
+            console.error('Raw message that caused error:', event.data);
           }
         };
 
@@ -86,7 +95,10 @@ export class WebSocketClient {
         payload,
       };
       console.log('Sending message:', message);
-      this.ws.send(JSON.stringify(message));
+      const messageStr = JSON.stringify(message);
+      console.log('Serialized message:', messageStr);
+      this.ws.send(messageStr);
+      console.log('Message sent successfully');
     } else {
       console.error(
         'WebSocket not connected, readyState:',

@@ -102,8 +102,11 @@ export class GameRoom extends DurableObject {
   }
 
   async handleSession(webSocket: WebSocket) {
+    console.log('=== Starting handleSession ===');
     console.log('Handling new WebSocket session');
     console.log('WebSocket readyState:', webSocket.readyState);
+    console.log('WebSocket URL:', webSocket.url);
+    console.log('WebSocket protocol:', webSocket.protocol);
     this.state.acceptWebSocket(webSocket);
     console.log('WebSocket accepted by state');
 
@@ -117,42 +120,65 @@ export class GameRoom extends DurableObject {
     } else {
       console.log('No game state available for new connection');
     }
+  }
 
-    webSocket.addEventListener('message', async msg => {
-      try {
-        console.log('Received raw message:', msg.data);
-        console.log('Message type:', typeof msg.data);
-        console.log('Message data:', msg.data);
-        const data: WebSocketMessage = JSON.parse(msg.data as string);
-        console.log('Parsed message:', data);
-        console.log('Message type:', data.type);
-        console.log('Message payload:', data.payload);
-        await this.handleMessage(webSocket, data);
-      } catch (error) {
-        console.error('Error handling message:', error);
-        console.error('Raw message that caused error:', msg.data);
-        this.send(webSocket, {
-          type: 'error',
-          payload: { message: 'Invalid message format' },
-        });
-      }
-    });
+  // Handle incoming WebSocket messages (required by Durable Objects)
+  async webSocketMessage(webSocket: WebSocket, message: string | ArrayBuffer) {
+    try {
+      console.log('=== webSocketMessage called ===');
+      console.log('Received raw message:', message);
+      console.log('Message type:', typeof message);
+      console.log('WebSocket readyState:', webSocket.readyState);
 
-    webSocket.addEventListener('close', () => {
-      const playerId = this.sessions.get(webSocket);
-      if (playerId && this.gameState) {
-        // Remove player
-        this.gameState.players = this.gameState.players.filter(
-          p => p.id !== playerId
-        );
-        this.sessions.delete(webSocket);
-        this.saveState();
-        this.broadcast({
-          type: 'game-state-update',
-          payload: this.getPublicGameState(),
-        });
-      }
-    });
+      const data: WebSocketMessage = JSON.parse(message as string);
+      console.log('Parsed message:', data);
+      console.log('Message type:', data.type);
+      console.log('Message payload:', data.payload);
+
+      await this.handleMessage(webSocket, data);
+      console.log('=== Message Processing Complete ===');
+    } catch (error) {
+      console.error('Error handling message:', error);
+      console.error('Raw message that caused error:', message);
+      this.send(webSocket, {
+        type: 'error',
+        payload: { message: 'Invalid message format' },
+      });
+    }
+  }
+
+  // Handle WebSocket close (required by Durable Objects)
+  async webSocketClose(
+    webSocket: WebSocket,
+    code: number,
+    reason: string,
+    wasClean: boolean
+  ) {
+    console.log('=== webSocketClose called ===');
+    console.log('Close code:', code);
+    console.log('Close reason:', reason);
+    console.log('Was clean:', wasClean);
+
+    const playerId = this.sessions.get(webSocket);
+    if (playerId && this.gameState) {
+      console.log('Removing player:', playerId);
+      // Remove player
+      this.gameState.players = this.gameState.players.filter(
+        p => p.id !== playerId
+      );
+      this.sessions.delete(webSocket);
+      await this.saveState();
+      this.broadcast({
+        type: 'game-state-update',
+        payload: this.getPublicGameState(),
+      });
+    }
+  }
+
+  // Handle WebSocket errors (required by Durable Objects)
+  async webSocketError(webSocket: WebSocket, error: unknown) {
+    console.log('=== webSocketError called ===');
+    console.error('WebSocket error:', error);
   }
 
   async handleMessage(webSocket: WebSocket, message: WebSocketMessage) {

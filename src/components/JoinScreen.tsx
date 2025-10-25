@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
-import { FaGamepad, FaInfoCircle } from 'react-icons/fa';
+import {
+  FaGamepad,
+  FaInfoCircle,
+  FaSpinner,
+  FaCheck,
+  FaTimes,
+  FaWifi,
+} from 'react-icons/fa';
 
 interface JoinScreenProps {
   onJoin: (name: string, isAdmin: boolean, roomCode?: string) => void;
   isConnecting?: boolean;
   error?: string;
   defaultName?: string;
+  connectionStatus?: 'disconnected' | 'connecting' | 'connected' | 'error';
+  processLog?: string[];
 }
 
 function JoinScreen({
@@ -13,6 +22,8 @@ function JoinScreen({
   isConnecting,
   error,
   defaultName = '',
+  connectionStatus = 'disconnected',
+  processLog = [],
 }: JoinScreenProps) {
   const [name, setName] = useState(defaultName);
   const [roomCode, setRoomCode] = useState('QUIZLINK');
@@ -54,12 +65,61 @@ function JoinScreen({
     }
   };
 
+  const getConnectionIcon = () => {
+    switch (connectionStatus) {
+      case 'connecting':
+        return <FaSpinner className="spinning" />;
+      case 'connected':
+        return <FaCheck className="success" />;
+      case 'error':
+        return <FaTimes className="error" />;
+      default:
+        return <FaWifi className="disconnected" />;
+    }
+  };
+
+  const getConnectionText = () => {
+    switch (connectionStatus) {
+      case 'connecting':
+        return 'Connecting to server...';
+      case 'connected':
+        return 'Connected to server';
+      case 'error':
+        return 'Connection failed';
+      default:
+        return 'Not connected';
+    }
+  };
+
   return (
     <div className="join-screen">
       <h1>
         <FaGamepad className="title-icon" /> QuizLink
       </h1>
       <p className="subtitle">Join the fun and test your knowledge!</p>
+
+      {/* Connection Status */}
+      <div className={`connection-status ${connectionStatus}`}>
+        <span className="connection-icon">{getConnectionIcon()}</span>
+        <span className="connection-text">{getConnectionText()}</span>
+      </div>
+
+      {/* Process Log */}
+      {processLog.length > 0 && (
+        <div className="process-log">
+          <h3>Connection Process:</h3>
+          <div className="log-entries">
+            {processLog.map((entry, index) => (
+              <div key={index} className="log-entry">
+                <span className="log-time">
+                  {new Date().toLocaleTimeString()}
+                </span>
+                <span className="log-message">{entry}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {error && <div className="error-message">{error}</div>}
 

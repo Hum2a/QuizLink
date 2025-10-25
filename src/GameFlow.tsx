@@ -27,6 +27,15 @@ function GameFlow() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string>('');
   const [currentUser, setCurrentUser] = useState(userAuthService.getUser());
+  const [connectionStatus, setConnectionStatus] = useState<
+    'disconnected' | 'connecting' | 'connected' | 'error'
+  >('disconnected');
+  const [processLog, setProcessLog] = useState<string[]>([]);
+
+  // Helper function to add log entries
+  const addLogEntry = (message: string) => {
+    setProcessLog(prev => [...prev, message]);
+  };
 
   // Check if user is authenticated
   useEffect(() => {
@@ -56,44 +65,62 @@ function GameFlow() {
 
   const connectToRoom = async (code: string): Promise<WebSocketClient> => {
     console.log('connectToRoom called with code:', code);
+    addLogEntry(`Starting connection to room: ${code}`);
+    setConnectionStatus('connecting');
     setIsConnecting(true);
     setError('');
 
     try {
       console.log('Creating WebSocket client with URL:', config.WS_URL);
+      addLogEntry('Creating WebSocket client...');
       const client = new WebSocketClient(config.WS_URL, code);
 
       client.on('game-state-update', (state: GameState) => {
         console.log('Received game-state-update:', state);
+        addLogEntry('Received game state update');
         setGameState(state);
       });
 
       client.on('join-success', ({ playerId, isAdmin }) => {
         console.log('Join successful:', { playerId, isAdmin });
+        addLogEntry(`Successfully joined as ${isAdmin ? 'admin' : 'player'}`);
         setPlayerId(playerId);
         setIsAdmin(isAdmin);
         setHasJoined(true);
+        setConnectionStatus('connected');
       });
 
       client.on('error', ({ message }) => {
         console.error('WebSocket error:', message);
+        addLogEntry(`Error: ${message}`);
         setError(message);
+        setConnectionStatus('error');
       });
 
       // Add a catch-all handler for debugging
       client.on('*', message => {
         console.log('Received unknown message:', message);
+        addLogEntry(`Received message: ${message.type}`);
       });
 
       console.log('Attempting to connect...');
+      addLogEntry('Attempting to connect to server...');
       await client.connect();
       console.log('WebSocket connected successfully');
+      addLogEntry('WebSocket connection established');
+      setConnectionStatus('connected');
       setWsClient(client);
       setRoomCode(code);
       return client;
     } catch (err) {
       console.error('Connection error:', err);
+      addLogEntry(
+        `Connection failed: ${
+          err instanceof Error ? err.message : 'Unknown error'
+        }`
+      );
       setError('Failed to connect to game room. Please try again.');
+      setConnectionStatus('error');
       throw err;
     } finally {
       setIsConnecting(false);
@@ -120,9 +147,14 @@ function GameFlow() {
       currentUser,
     });
 
+    // Clear previous logs and reset status
+    setProcessLog([]);
+    setError('');
+
     // Prevent multiple calls
     if (isConnecting) {
       console.log('Already connecting, ignoring duplicate call');
+      addLogEntry('Already connecting, please wait...');
       return;
     }
 
@@ -130,6 +162,7 @@ function GameFlow() {
     const displayName = name || currentUser?.display_name || 'Player';
     setPlayerName(displayName);
 
+    addLogEntry(`Joining as ${asAdmin ? 'admin' : 'player'}: ${displayName}`);
     console.log('Attempting to connect to room:', code);
     let client: WebSocketClient;
 
@@ -152,12 +185,14 @@ function GameFlow() {
       }
     }
 
-    // Wait a bit for connection to establish, then emit join event
+    // Send join message after a short delay to ensure connection is fully established
+    addLogEntry('Waiting for WebSocket to be ready...');
     setTimeout(() => {
       console.log('WebSocket connection status:', client?.isConnected());
       console.log('WebSocket readyState:', client?.getReadyState());
       if (client && client.isConnected()) {
         console.log('Emitting join-game event');
+        addLogEntry('Sending join request to server...');
         client.emit('join-game', {
           name: displayName,
           isAdmin: asAdmin,
@@ -166,18 +201,26 @@ function GameFlow() {
         });
       } else {
         console.error('WebSocket not connected, cannot join game');
-        // Try to emit anyway in case the connection is just slow
-        if (client) {
-          console.log('Attempting to emit despite connection check...');
-          client.emit('join-game', {
-            name: displayName,
-            isAdmin: asAdmin,
-            roomCode: code,
-            userId: currentUser?.id || null,
-          });
-        }
+        addLogEntry('WebSocket not ready, retrying in 200ms...');
+        // Retry after a longer delay
+        setTimeout(() => {
+          if (client && client.isConnected()) {
+            console.log('Retrying join-game event');
+            addLogEntry('Retrying join request...');
+            client.emit('join-game', {
+              name: displayName,
+              isAdmin: asAdmin,
+              roomCode: code,
+              userId: currentUser?.id || null,
+            });
+          } else {
+            console.error('WebSocket still not connected after retry');
+            addLogEntry('Failed to connect to WebSocket');
+            setConnectionStatus('error');
+          }
+        }, 200);
       }
-    }, 500); // Increased timeout to 500ms
+    }, 200); // Wait 200ms for connection to be fully established
   };
 
   const handleLogout = () => {
@@ -240,6 +283,8 @@ function GameFlow() {
           isConnecting={isConnecting}
           error={error}
           defaultName={currentUser?.display_name || 'Guest'}
+          connectionStatus={connectionStatus}
+          processLog={processLog}
         />
       </div>
     );

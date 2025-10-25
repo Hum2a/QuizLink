@@ -1027,3 +1027,135 @@ body {
 .password-toggle:focus svg {
   filter: drop-shadow(0 0 3px rgba(102, 126, 234, 0.7));
 }
+
+/* Connection Status */
+.connection-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.connection-status.disconnected {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+
+.connection-status.connecting {
+  background-color: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fbbf24;
+}
+
+.connection-status.connected {
+  background-color: #d1fae5;
+  color: #059669;
+  border: 1px solid #34d399;
+}
+
+.connection-status.error {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #f87171;
+}
+
+.connection-icon {
+  font-size: 16px;
+}
+
+.connection-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.connection-icon.success {
+  color: #059669;
+}
+
+.connection-icon.error {
+  color: #dc2626;
+}
+
+.connection-icon.disconnected {
+  color: #6b7280;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Process Log */
+.process-log {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.process-log h3 {
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.log-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.log-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-time {
+  color: #6b7280;
+  font-family: 'Courier New', monospace;
+  min-width: 80px;
+}
+
+.log-message {
+  color: #374151;
+  flex: 1;
+}
+
+/* Enhanced button states */
+.btn-player:disabled,
+.btn-admin:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-player:disabled:hover,
+.btn-admin:disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+}
