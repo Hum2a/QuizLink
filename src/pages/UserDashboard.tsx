@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { userAuthService } from '../services/userAuth';
 import type { User } from '../services/userAuth';
 import { usePermissions } from '../hooks/usePermissions';
+import ThemeToggle from '../components/ThemeToggle';
 import {
   FaUser,
   FaGamepad,
@@ -84,6 +85,7 @@ function UserDashboard() {
           <p>Welcome back, {user.display_name}!</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <ThemeToggle size="md" />
           <Link to="/profile" className="btn-secondary">
             <FaUser /> Profile
           </Link>
