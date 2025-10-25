@@ -19,6 +19,7 @@ import AchievementDashboard from './pages/AchievementDashboard';
 import MobileGameFlow from './components/MobileGameFlow';
 import MobileQuizBrowser from './components/MobileQuizBrowser';
 import MobileGesturesDemo from './pages/MobileGesturesDemo';
+import RecommendationDashboard from './pages/RecommendationDashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 export interface AppRoute {
@@ -75,6 +76,13 @@ export const navigationRoutes: AppRoute[] = [
     element: <AchievementDashboard />,
     title: 'Achievements',
     description: 'Track your achievements and progress',
+    requiresAuth: true,
+  },
+  {
+    path: '/recommendations',
+    element: <RecommendationDashboard />,
+    title: 'Recommendations',
+    description: 'Personalized quiz recommendations',
     requiresAuth: true,
   },
   {

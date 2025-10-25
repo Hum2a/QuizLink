@@ -14,6 +14,7 @@ import {
   FaStar,
   FaUsers,
   FaCode,
+  FaLightbulb,
 } from 'react-icons/fa';
 import { IoStatsChart } from 'react-icons/io5';
 import { MdAdminPanelSettings } from 'react-icons/md';
@@ -170,6 +171,14 @@ function UserDashboard() {
               </div>
               <h3>Achievements</h3>
               <p>Track your progress and unlock badges</p>
+            </Link>
+
+            <Link to="/recommendations" className="action-card">
+              <div className="action-icon">
+                <FaLightbulb size={48} />
+              </div>
+              <h3>Recommendations</h3>
+              <p>Discover personalized quiz suggestions</p>
             </Link>
 
             <Link to="/profile" className="action-card">
