@@ -23,14 +23,7 @@ function UserDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const {
-    permissions,
-    isDeveloper,
-    isAdmin,
-    isDeveloperOrAdmin,
-    loading: permissionsLoading,
-    error: permissionsError,
-  } = usePermissions();
+  const { isDeveloper, isDeveloperOrAdmin } = usePermissions();
 
   useEffect(() => {
     const loadUser = async () => {

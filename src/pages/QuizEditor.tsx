@@ -369,19 +369,19 @@ function QuizEditor() {
           nextDisplayOrder={safeQuestions.length + 1}
         />
       )}
-      
+
       <style>{`
         .header-actions {
           display: flex;
           align-items: center;
           gap: 1rem;
         }
-        
+
         .save-status {
           color: var(--color-text-secondary);
           font-size: 0.875rem;
         }
-        
+
         .save-status small {
           display: flex;
           align-items: center;
