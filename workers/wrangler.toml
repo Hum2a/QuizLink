@@ -25,9 +25,10 @@ new_sqlite_classes = ["GameRoom"]
 ENVIRONMENT = "production"
 
 # Database binding (Neon via Hyperdrive for connection pooling)
-[[hyperdrive]]
-binding = "HYPERDRIVE"
-id = "affe1c32970d4c4a8175988fbfd8fece"
+# Commented out for local development
+# [[hyperdrive]]
+# binding = "HYPERDRIVE"
+# id = "affe1c32970d4c4a8175988fbfd8fece"
 
 # Development environment
 [env.development]
