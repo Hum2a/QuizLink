@@ -26,10 +26,16 @@ export default {
     // WebSocket upgrade for game rooms
     if (url.pathname.startsWith('/game/')) {
       console.log('WebSocket request received for path:', url.pathname);
+      console.log('Request method:', request.method);
       console.log(
         'Request headers:',
         Object.fromEntries(request.headers.entries())
       );
+
+      const upgradeHeader = request.headers.get('Upgrade');
+      const connectionHeader = request.headers.get('Connection');
+      console.log('Upgrade header:', upgradeHeader);
+      console.log('Connection header:', connectionHeader);
 
       const roomCode = url.pathname.split('/')[2];
       console.log('Extracted room code:', roomCode);
