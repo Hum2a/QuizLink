@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { userAuthService } from '../services/userAuth';
+import { config } from '../config';
 
 export interface UserRole {
   id: string;
@@ -36,7 +37,7 @@ export function usePermissions() {
         return;
       }
 
-      const response = await fetch('/api/user/permissions', {
+      const response = await fetch(`${config.API_URL}/api/user/permissions`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',

@@ -792,7 +792,7 @@ async function handleUserAPI(
       const rolePermissions = new RolePermissions(env.DATABASE_URL);
 
       const userRoles = await rolePermissions.getUserRoles(payload.userId);
-      const user = await userAuthService.getUserFromToken(token);
+      const user = await userAuth.getUserFromToken(token);
 
       return new Response(
         JSON.stringify({
@@ -833,8 +833,8 @@ async function handleAdminAPI(
   env: Env
 ): Promise<Response> {
   // Verify authentication
-  const auth = new Auth(env.DATABASE_URL);
-  const token = auth.extractToken(request);
+  const userAuth = new UserAuth(env.DATABASE_URL);
+  const token = userAuth.extractToken(request);
 
   if (!token) {
     return new Response(JSON.stringify({ error: 'Authentication required' }), {
@@ -843,11 +843,27 @@ async function handleAdminAPI(
     });
   }
 
-  const user = await auth.getUserFromToken(token);
+  const payload = await userAuth.verifyToken(token);
 
-  if (!user) {
+  if (!payload) {
     return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
       status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Check if user has admin/developer role
+  const { RolePermissions } = await import('./role-permissions');
+  const rolePermissions = new RolePermissions(env.DATABASE_URL);
+  const userRoles = await rolePermissions.getUserRoles(payload.userId);
+
+  const hasAdminAccess = userRoles.some(role =>
+    role.name === 'admin' || role.name === 'developer'
+  );
+
+  if (!hasAdminAccess) {
+    return new Response(JSON.stringify({ error: 'Admin access required' }), {
+      status: 403,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
@@ -1006,6 +1022,17 @@ async function handleAdminAPI(
       });
     }
 
+    // User Management Endpoints
+    // GET /api/admin/users - Get all users with their roles (alias for users-with-roles)
+    if (url.pathname === '/api/admin/users' && request.method === 'GET') {
+      const { RolePermissions } = await import('./role-permissions');
+      const rolePermissions = new RolePermissions(env.DATABASE_URL);
+      const users = await rolePermissions.getUsersWithRoles();
+      return new Response(JSON.stringify({ users }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Role Management Endpoints
     const { RolePermissions } = await import('./role-permissions');
     const rolePermissions = new RolePermissions(env.DATABASE_URL);
@@ -1038,7 +1065,22 @@ async function handleAdminAPI(
         userId: string;
         roleName: string;
       };
-      await rolePermissions.assignRole(body.userId, body.roleName, 'system');
+      await rolePermissions.assignRole(body.userId, body.roleName, payload.userId);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // POST /api/admin/users/assign-role - Assign role to user (alternative endpoint)
+    if (
+      url.pathname === '/api/admin/users/assign-role' &&
+      request.method === 'POST'
+    ) {
+      const body = (await request.json()) as {
+        userId: string;
+        roleName: string;
+      };
+      await rolePermissions.assignRole(body.userId, body.roleName, payload.userId);
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -1048,6 +1090,21 @@ async function handleAdminAPI(
     if (
       url.pathname === '/api/admin/remove-role' &&
       request.method === 'DELETE'
+    ) {
+      const body = (await request.json()) as {
+        userId: string;
+        roleName: string;
+      };
+      await rolePermissions.removeRole(body.userId, body.roleName);
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // POST /api/admin/users/remove-role - Remove role from user (alternative endpoint)
+    if (
+      url.pathname === '/api/admin/users/remove-role' &&
+      request.method === 'POST'
     ) {
       const body = (await request.json()) as {
         userId: string;

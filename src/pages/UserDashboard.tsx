@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { userAuthService } from '../services/userAuth';
 import type { User } from '../services/userAuth';
+import { usePermissions } from '../hooks/usePermissions';
 import {
   FaUser,
   FaGamepad,
@@ -10,14 +11,47 @@ import {
   FaSignOutAlt,
   FaTrophy,
   FaStar,
+  FaCog,
+  FaUsers,
+  FaCode,
+  FaShieldAlt,
 } from 'react-icons/fa';
 import { IoStatsChart } from 'react-icons/io5';
+import { MdAdminPanelSettings } from 'react-icons/md';
 import '../styles/admin.css';
 
 function UserDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const {
+    permissions,
+    isDeveloper,
+    isAdmin,
+    isDeveloperOrAdmin,
+    loading: permissionsLoading,
+    error: permissionsError,
+  } = usePermissions();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 Debug Info:');
+    console.log('- User:', user);
+    console.log('- Permissions:', permissions);
+    console.log('- Permissions Loading:', permissionsLoading);
+    console.log('- Permissions Error:', permissionsError);
+    console.log('- Is Developer:', isDeveloper());
+    console.log('- Is Admin:', isAdmin());
+    console.log('- Is Developer or Admin:', isDeveloperOrAdmin());
+  }, [
+    user,
+    permissions,
+    permissionsLoading,
+    permissionsError,
+    isDeveloper,
+    isAdmin,
+    isDeveloperOrAdmin,
+  ]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -167,6 +201,86 @@ function UserDashboard() {
           </div>
         </div>
 
+        {/* Debug Section - Remove this after testing */}
+        <div
+          className="debug-section"
+          style={{
+            background: '#f0f0f0',
+            padding: '1rem',
+            margin: '1rem 0',
+            borderRadius: '8px',
+          }}
+        >
+          <h3>🔍 Debug Info:</h3>
+          <p>
+            <strong>Permissions Loading:</strong>{' '}
+            {permissionsLoading ? 'Yes' : 'No'}
+          </p>
+          <p>
+            <strong>Permissions Error:</strong> {permissionsError || 'None'}
+          </p>
+          <p>
+            <strong>Permissions Data:</strong>{' '}
+            {permissions ? JSON.stringify(permissions, null, 2) : 'None'}
+          </p>
+          <p>
+            <strong>Is Developer:</strong> {isDeveloper() ? 'Yes' : 'No'}
+          </p>
+          <p>
+            <strong>Is Admin:</strong> {isAdmin() ? 'Yes' : 'No'}
+          </p>
+          <p>
+            <strong>Is Developer or Admin:</strong>{' '}
+            {isDeveloperOrAdmin() ? 'Yes' : 'No'}
+          </p>
+        </div>
+
+        {/* Admin Features - Only show for developers/admins */}
+        {isDeveloperOrAdmin() && (
+          <div className="admin-section">
+            <h2>
+              <MdAdminPanelSettings /> Admin Features
+            </h2>
+            <div className="admin-cards">
+              <Link to="/admin/quizzes" className="admin-card">
+                <div className="admin-icon">
+                  <FaBook size={48} />
+                </div>
+                <h3>Quiz Management</h3>
+                <p>Manage all quizzes and questions</p>
+              </Link>
+
+              <Link to="/admin/analytics" className="admin-card">
+                <div className="admin-icon">
+                  <IoStatsChart size={48} />
+                </div>
+                <h3>Analytics</h3>
+                <p>View system analytics and stats</p>
+              </Link>
+
+              {isDeveloper() && (
+                <Link to="/developer" className="admin-card developer-card">
+                  <div className="admin-icon">
+                    <FaCode size={48} />
+                  </div>
+                  <h3>Developer Tools</h3>
+                  <p>Advanced system management</p>
+                </Link>
+              )}
+
+              {isDeveloperOrAdmin() && (
+                <Link to="/admin/users" className="admin-card">
+                  <div className="admin-icon">
+                    <FaUsers size={48} />
+                  </div>
+                  <h3>User Management</h3>
+                  <p>Manage users and roles</p>
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Quick Actions */}
         <div className="analytics-section">
           <h2>Quick Actions</h2>
@@ -259,6 +373,85 @@ function UserDashboard() {
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
+        }
+
+        .admin-section {
+          margin: 3rem 0;
+          padding: 2rem;
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          border-radius: 16px;
+          border: 2px solid #e2e8f0;
+        }
+
+        .admin-section h2 {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 1.5rem;
+          color: #1e293b;
+          font-size: 1.5rem;
+        }
+
+        .admin-cards {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 1.5rem;
+        }
+
+        .admin-card {
+          background: white;
+          border: 2px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 2rem;
+          text-align: center;
+          text-decoration: none;
+          color: inherit;
+          transition: all 0.3s ease;
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .admin-card:hover {
+          border-color: #3b82f6;
+          transform: translateY(-4px);
+          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+        }
+
+        .admin-card.developer-card {
+          background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+          color: white;
+          border-color: #475569;
+        }
+
+        .admin-card.developer-card:hover {
+          border-color: #64748b;
+          box-shadow: 0 8px 24px rgba(30, 41, 59, 0.3);
+        }
+
+        .admin-icon {
+          color: #3b82f6;
+          margin-bottom: 1rem;
+        }
+
+        .developer-card .admin-icon {
+          color: #60a5fa;
+        }
+
+        .admin-card h3 {
+          margin: 0.5rem 0;
+          font-size: 1.25rem;
+          font-weight: 600;
+        }
+
+        .admin-card p {
+          margin: 0.5rem 0 0;
+          color: #6b7280;
+          font-size: 0.9rem;
+        }
+
+        .developer-card p {
+          color: rgba(255, 255, 255, 0.8);
         }
       `}</style>
     </div>
