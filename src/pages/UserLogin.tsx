@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { userAuthService } from '../services/userAuth';
-import { FaGamepad, FaArrowRight, FaSignInAlt } from 'react-icons/fa';
+import {
+  FaGamepad,
+  FaArrowRight,
+  FaSignInAlt,
+  FaEye,
+  FaEyeSlash,
+} from 'react-icons/fa';
 import '../App.css';
 
 function UserLogin() {
   const navigate = useNavigate();
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -46,13 +53,25 @@ function UserLogin() {
             autoFocus
           />
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
+          <div className="password-input-container">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              className={`password-toggle ${
+                showPassword ? 'showing' : 'hiding'
+              }`}
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
 
           <button
             type="submit"

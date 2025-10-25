@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaLock, FaCheckCircle, FaTimes } from 'react-icons/fa';
+import {
+  FaArrowLeft,
+  FaLock,
+  FaCheckCircle,
+  FaTimes,
+  FaEye,
+  FaEyeSlash,
+} from 'react-icons/fa';
 import './Auth.css';
 
 function ResetPassword() {
@@ -8,6 +15,8 @@ function ResetPassword() {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
@@ -100,7 +109,7 @@ function ResetPassword() {
               <div className="input-group">
                 <FaLock className="input-icon" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   id="password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -109,6 +118,16 @@ function ResetPassword() {
                   minLength={6}
                   className="form-input"
                 />
+                <button
+                  type="button"
+                  className={`password-toggle ${
+                    showPassword ? 'showing' : 'hiding'
+                  }`}
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
             </div>
 
@@ -117,7 +136,7 @@ function ResetPassword() {
               <div className="input-group">
                 <FaLock className="input-icon" />
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   id="confirmPassword"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
@@ -126,6 +145,20 @@ function ResetPassword() {
                   minLength={6}
                   className="form-input"
                 />
+                <button
+                  type="button"
+                  className={`password-toggle ${
+                    showConfirmPassword ? 'showing' : 'hiding'
+                  }`}
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={
+                    showConfirmPassword
+                      ? 'Hide confirm password'
+                      : 'Show confirm password'
+                  }
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
             </div>
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { userAuthService } from '../services/userAuth';
-import { FaGamepad, FaArrowRight } from 'react-icons/fa';
+import { FaGamepad, FaArrowRight, FaEye, FaEyeSlash } from 'react-icons/fa';
 import '../App.css';
 
 function UserRegister() {
@@ -11,8 +11,10 @@ function UserRegister() {
     displayName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,11 +39,11 @@ function UserRegister() {
     }
 
     setLoading(true);
-    
+
     try {
       await userAuthService.register(
-        formData.email, 
-        formData.password, 
+        formData.email,
+        formData.password,
         formData.username,
         formData.displayName
       );
@@ -56,17 +58,26 @@ function UserRegister() {
   return (
     <div className="app">
       <div className="join-screen">
-        <h1><FaGamepad className="title-icon" /> Join QuizLink!</h1>
+        <h1>
+          <FaGamepad className="title-icon" /> Join QuizLink!
+        </h1>
         <p className="subtitle">Create your account to start playing</p>
-        
+
         {error && <div className="error-message">{error}</div>}
-        
+
         <form onSubmit={handleRegister}>
           <input
             type="text"
             placeholder="Username (unique, 3+ characters)"
             value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+            onChange={e =>
+              setFormData({
+                ...formData,
+                username: e.target.value
+                  .toLowerCase()
+                  .replace(/[^a-z0-9_]/g, ''),
+              })
+            }
             required
             minLength={3}
             maxLength={20}
@@ -77,7 +88,9 @@ function UserRegister() {
             type="text"
             placeholder="Display Name (shown in games)"
             value={formData.displayName}
-            onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+            onChange={e =>
+              setFormData({ ...formData, displayName: e.target.value })
+            }
             required
             maxLength={50}
           />
@@ -86,33 +99,71 @@ function UserRegister() {
             type="email"
             placeholder="Email address"
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={e => setFormData({ ...formData, email: e.target.value })}
             required
-          />
-          
-          <input
-            type="password"
-            placeholder="Password (min 6 characters)"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            required
-            minLength={6}
           />
 
-          <input
-            type="password"
-            placeholder="Confirm password"
-            value={formData.confirmPassword}
-            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-            required
-          />
-          
-          <button 
-            type="submit" 
+          <div className="password-input-container">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Password (min 6 characters)"
+              value={formData.password}
+              onChange={e =>
+                setFormData({ ...formData, password: e.target.value })
+              }
+              required
+              minLength={6}
+            />
+            <button
+              type="button"
+              className={`password-toggle ${
+                showPassword ? 'showing' : 'hiding'
+              }`}
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+
+          <div className="password-input-container">
+            <input
+              type={showConfirmPassword ? 'text' : 'password'}
+              placeholder="Confirm password"
+              value={formData.confirmPassword}
+              onChange={e =>
+                setFormData({ ...formData, confirmPassword: e.target.value })
+              }
+              required
+            />
+            <button
+              type="button"
+              className={`password-toggle ${
+                showConfirmPassword ? 'showing' : 'hiding'
+              }`}
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              aria-label={
+                showConfirmPassword
+                  ? 'Hide confirm password'
+                  : 'Show confirm password'
+              }
+            >
+              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+
+          <button
+            type="submit"
             className="btn-player btn-full-width"
             disabled={loading}
           >
-            {loading ? 'Creating account...' : <><FaGamepad /> Create Account & Start Playing</>}
+            {loading ? (
+              'Creating account...'
+            ) : (
+              <>
+                <FaGamepad /> Create Account & Start Playing
+              </>
+            )}
           </button>
         </form>
 
@@ -134,4 +185,3 @@ function UserRegister() {
 }
 
 export default UserRegister;
-
