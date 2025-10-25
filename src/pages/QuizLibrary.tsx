@@ -2,7 +2,16 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { quizAPI } from '../services/api';
 import type { QuizTemplate } from '../services/api';
-import { FaBook, FaPlusCircle, FaEdit, FaTrash, FaSearch, FaArrowLeft, FaFileAlt, FaGamepad } from 'react-icons/fa';
+import {
+  FaBook,
+  FaPlusCircle,
+  FaEdit,
+  FaTrash,
+  FaSearch,
+  FaArrowLeft,
+  FaFileAlt,
+  FaGamepad,
+} from 'react-icons/fa';
 import { IoStatsChart } from 'react-icons/io5';
 import { MdQuiz } from 'react-icons/md';
 import '../styles/admin.css';
@@ -33,7 +42,7 @@ function QuizLibrary() {
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
-    
+
     try {
       await quizAPI.deleteQuiz(id);
       setQuizzes(quizzes.filter(q => q.id !== id));
@@ -44,13 +53,18 @@ function QuizLibrary() {
   };
 
   const filteredQuizzes = quizzes.filter(quiz => {
-    const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         quiz.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || quiz.category === categoryFilter;
+    const matchesSearch =
+      quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quiz.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      categoryFilter === 'all' || quiz.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ['all', ...new Set(quizzes.map(q => q.category).filter(Boolean))];
+  const categories = [
+    'all',
+    ...new Set(quizzes.map(q => q.category).filter(Boolean)),
+  ];
 
   if (loading) {
     return (
@@ -64,8 +78,12 @@ function QuizLibrary() {
     <div className="admin-container">
       <header className="admin-header">
         <div>
-          <Link to="/admin" className="btn-back"><FaArrowLeft /> Dashboard</Link>
-          <h1><FaBook /> Quiz Library</h1>
+          <Link to="/dashboard" className="btn-back">
+            <FaArrowLeft /> Dashboard
+          </Link>
+          <h1>
+            <FaBook /> Quiz Library
+          </h1>
         </div>
         <Link to="/admin/quizzes/new" className="btn-primary">
           <FaPlusCircle /> Create New Quiz
@@ -82,14 +100,14 @@ function QuizLibrary() {
               type="text"
               placeholder="Search quizzes..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="search-input"
             />
           </div>
-          
-          <select 
-            value={categoryFilter} 
-            onChange={(e) => setCategoryFilter(e.target.value)}
+
+          <select
+            value={categoryFilter}
+            onChange={e => setCategoryFilter(e.target.value)}
             className="category-filter"
             aria-label="Filter by category"
           >
@@ -103,7 +121,9 @@ function QuizLibrary() {
 
         {filteredQuizzes.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon"><MdQuiz size={100} /></div>
+            <div className="empty-icon">
+              <MdQuiz size={100} />
+            </div>
             <h2>No Quizzes Found</h2>
             <p>Create your first quiz to get started!</p>
             <Link to="/admin/quizzes/new" className="btn-primary">
@@ -116,15 +136,15 @@ function QuizLibrary() {
               <div key={quiz.id} className="quiz-card">
                 <div className="quiz-card-header">
                   <h3>{quiz.title}</h3>
-                  <span 
+                  <span
                     className={`difficulty-badge difficulty-${quiz.difficulty}`}
                   >
                     {quiz.difficulty}
                   </span>
                 </div>
-                
+
                 <p className="quiz-description">{quiz.description}</p>
-                
+
                 <div className="quiz-meta">
                   <span className="quiz-stat">
                     <FaFileAlt /> {quiz.question_count || 0} questions
@@ -139,19 +159,16 @@ function QuizLibrary() {
                 )}
 
                 <div className="quiz-actions">
-                  <Link 
-                    to={`/admin/quizzes/${quiz.id}`}
-                    className="btn-edit"
-                  >
+                  <Link to={`/admin/quizzes/${quiz.id}`} className="btn-edit">
                     <FaEdit /> Edit
                   </Link>
-                  <Link 
+                  <Link
                     to={`/admin/quizzes/${quiz.id}/analytics`}
                     className="btn-analytics"
                   >
                     <IoStatsChart /> Stats
                   </Link>
-                  <button 
+                  <button
                     onClick={() => handleDelete(quiz.id, quiz.title)}
                     className="btn-delete"
                   >
@@ -168,4 +185,3 @@ function QuizLibrary() {
 }
 
 export default QuizLibrary;
-
