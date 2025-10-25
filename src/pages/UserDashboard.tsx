@@ -12,10 +12,8 @@ import {
   FaSignOutAlt,
   FaTrophy,
   FaStar,
-  FaCog,
   FaUsers,
   FaCode,
-  FaShieldAlt,
 } from 'react-icons/fa';
 import { IoStatsChart } from 'react-icons/io5';
 import { MdAdminPanelSettings } from 'react-icons/md';
