@@ -2,6 +2,7 @@ import { GameRoom } from './game-room';
 import { AdminAPI } from './admin-api';
 import { Auth } from './auth';
 import { UserAuth } from './user-auth';
+import { Database } from './database';
 import type { Env } from './types';
 
 export { GameRoom };
@@ -24,17 +25,27 @@ export default {
 
     // WebSocket upgrade for game rooms
     if (url.pathname.startsWith('/game/')) {
+      console.log('WebSocket request received for path:', url.pathname);
+      console.log(
+        'Request headers:',
+        Object.fromEntries(request.headers.entries())
+      );
+
       const roomCode = url.pathname.split('/')[2];
+      console.log('Extracted room code:', roomCode);
 
       if (!roomCode) {
+        console.log('No room code found, returning 400');
         return new Response('Room code required', { status: 400 });
       }
 
       // Get or create Durable Object for this room
       const id = env.GAME_ROOM.idFromName(roomCode);
       const stub = env.GAME_ROOM.get(id);
+      console.log('Created Durable Object stub for room:', roomCode);
 
       // Forward request to Durable Object
+      console.log('Forwarding request to Durable Object');
       return stub.fetch(request);
     }
 
@@ -48,24 +59,125 @@ export default {
       );
     }
 
+    // Debug endpoint to test database connection
+    if (url.pathname === '/debug/db' && request.method === 'GET') {
+      try {
+        if (!env.DATABASE_URL) {
+          return new Response(
+            JSON.stringify({
+              error: 'DATABASE_URL not configured',
+              status: 'error',
+            }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+
+        const db = new Database(env.DATABASE_URL);
+        const result = await db.sql`SELECT 1 as test`;
+
+        return new Response(
+          JSON.stringify({
+            status: 'ok',
+            database: 'connected',
+            testQuery: result[0],
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      } catch (error) {
+        return new Response(
+          JSON.stringify({
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error',
+            database: 'failed',
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    }
+
     // API endpoints for game management
     if (url.pathname === '/api/create-room' && request.method === 'POST') {
       try {
         const body = (await request.json()) as {
           hostName: string;
-          questions?: any[];
+          quizId?: string;
+          roomCode?: string;
         };
-        const roomCode = generateRoomCode();
 
-        return new Response(JSON.stringify({ roomCode }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        // For local development, skip database operations
+        const roomCode =
+          body.roomCode ||
+          'LOCAL' + Math.random().toString(36).substr(2, 5).toUpperCase();
+
+        console.log(
+          'Creating game with room code:',
+          roomCode,
+          'host:',
+          body.hostName
+        );
+
+        // For local development, just return success without database operations
+        const gameId = 'local-' + Date.now();
+        console.log('Game created successfully with ID:', gameId);
+
+        return new Response(
+          JSON.stringify({
+            roomCode,
+            gameId,
+            success: true,
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
       } catch (error) {
-        return new Response(JSON.stringify({ error: 'Invalid request' }), {
+        console.error('Create room error:', error);
+        return new Response(
+          JSON.stringify({
+            error: 'Failed to create game room',
+            details: error instanceof Error ? error.message : 'Unknown error',
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    }
+
+    // Validate room exists
+    if (
+      url.pathname.startsWith('/api/validate-room/') &&
+      request.method === 'GET'
+    ) {
+      const roomCode = url.pathname.split('/')[3];
+      if (!roomCode) {
+        return new Response(JSON.stringify({ error: 'Room code required' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+
+      // For local development, always return that room exists
+      return new Response(
+        JSON.stringify({
+          exists: true,
+          roomCode,
+          hostName: 'Local Host',
+          status: 'lobby',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Get room state (for debugging)
@@ -87,7 +199,7 @@ export default {
     }
 
     // User auth endpoints (public)
-    if (url.pathname.startsWith('/api/auth/user/') && env.DATABASE_URL) {
+    if (url.pathname.startsWith('/api/auth/user/')) {
       return handleUserAuthAPI(request, url, env);
     }
 
@@ -104,6 +216,28 @@ export default {
     // Admin API endpoints (protected)
     if (url.pathname.startsWith('/api/admin/') && env.DATABASE_URL) {
       return handleAdminAPI(request, url, env);
+    }
+
+    // Root path handler
+    if (url.pathname === '/') {
+      return new Response(
+        JSON.stringify({
+          message: 'QuizLink API is running!',
+          version: '1.0.0',
+          endpoints: {
+            health: '/health',
+            debug: '/debug/db',
+            createRoom: '/api/create-room',
+            validateRoom: '/api/validate-room/{code}',
+            userAuth: '/api/auth/user/*',
+            adminAuth: '/api/auth/admin/*',
+            websocket: '/game/{roomCode}',
+          },
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     return new Response('Not found', {
@@ -235,9 +369,8 @@ async function handleUserAuthAPI(
   url: URL,
   env: Env
 ): Promise<Response> {
-  const userAuth = new UserAuth(env.DATABASE_URL);
-
   try {
+    const userAuth = new UserAuth(env.DATABASE_URL);
     // POST /api/auth/user/register
     if (
       url.pathname === '/api/auth/user/register' &&
@@ -299,30 +432,58 @@ async function handleUserAuthAPI(
 
     // POST /api/auth/user/login
     if (url.pathname === '/api/auth/user/login' && request.method === 'POST') {
-      const body = (await request.json()) as {
-        emailOrUsername: string;
-        password: string;
-      };
+      try {
+        const body = (await request.json()) as {
+          emailOrUsername: string;
+          password: string;
+        };
 
-      if (!body.emailOrUsername || !body.password) {
-        return new Response(JSON.stringify({ error: 'Missing credentials' }), {
-          status: 400,
+        console.log('Login attempt for:', body.emailOrUsername);
+
+        if (!body.emailOrUsername || !body.password) {
+          return new Response(
+            JSON.stringify({ error: 'Missing credentials' }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+
+        const result = await userAuth.login(
+          body.emailOrUsername,
+          body.password
+        );
+
+        if (!result) {
+          console.log('Login failed for:', body.emailOrUsername);
+          return new Response(
+            JSON.stringify({ error: 'Invalid credentials' }),
+            {
+              status: 401,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+
+        console.log('Login successful for:', body.emailOrUsername);
+
+        return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      } catch (error) {
+        console.error('Login error:', error);
+        return new Response(
+          JSON.stringify({
+            error: 'Login failed',
+            details: error instanceof Error ? error.message : 'Unknown error',
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
       }
-
-      const result = await userAuth.login(body.emailOrUsername, body.password);
-
-      if (!result) {
-        return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
     }
 
     // GET /api/auth/user/me
@@ -843,4 +1004,23 @@ function generateRoomCode(): string {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return code;
+}
+
+async function generateUniqueRoomCode(db: Database): Promise<string> {
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  while (attempts < maxAttempts) {
+    const roomCode = generateRoomCode();
+    const existingGame = await db.getGameByRoomCode(roomCode);
+
+    if (!existingGame) {
+      return roomCode;
+    }
+
+    attempts++;
+  }
+
+  // If we can't find a unique code after max attempts, add timestamp
+  return generateRoomCode() + Date.now().toString().slice(-2);
 }
