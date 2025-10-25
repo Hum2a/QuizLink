@@ -3,7 +3,15 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { quizAPI } from '../services/api';
 import type { QuizTemplate, Question } from '../services/api';
 import QuestionForm from '../components/QuestionForm';
-import { FaPlusCircle, FaSave, FaArrowLeft, FaEdit, FaArrowUp, FaArrowDown, FaTrash } from 'react-icons/fa';
+import {
+  FaPlusCircle,
+  FaSave,
+  FaArrowLeft,
+  FaEdit,
+  FaArrowUp,
+  FaArrowDown,
+  FaTrash,
+} from 'react-icons/fa';
 import { MdQuiz } from 'react-icons/md';
 import '../styles/admin.css';
 
@@ -17,7 +25,7 @@ function QuizEditor() {
     description: '',
     category: '',
     difficulty: 'medium',
-    is_public: true
+    is_public: true,
   });
 
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -38,10 +46,10 @@ function QuizEditor() {
     try {
       setLoading(true);
       const data = await quizAPI.getQuiz(id);
-      setQuiz(data);
+      setQuiz(data || {});
     } catch (err) {
+      console.error('Failed to load quiz:', err);
       alert('Failed to load quiz');
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -51,9 +59,11 @@ function QuizEditor() {
     if (!id) return;
     try {
       const data = await quizAPI.getQuestions(id);
-      setQuestions(data);
+      console.log('Questions data received:', data);
+      setQuestions(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to load questions:', err);
+      setQuestions([]); // Set to empty array on error
     }
   };
 
@@ -65,7 +75,7 @@ function QuizEditor() {
 
     try {
       setSaving(true);
-      
+
       if (isNewQuiz) {
         const { id: newId } = await quizAPI.createQuiz(quiz as any);
         navigate(`/admin/quizzes/${newId}`);
@@ -91,7 +101,9 @@ function QuizEditor() {
     setShowQuestionForm(true);
   };
 
-  const handleSaveQuestion = async (question: Omit<Question, 'id' | 'quiz_template_id'>) => {
+  const handleSaveQuestion = async (
+    question: Omit<Question, 'id' | 'quiz_template_id'>
+  ) => {
     if (!id || isNewQuiz) {
       alert('Please save the quiz first before adding questions');
       return;
@@ -103,7 +115,7 @@ function QuizEditor() {
       } else {
         await quizAPI.addQuestion(id, question);
       }
-      
+
       setShowQuestionForm(false);
       setEditingQuestion(null);
       loadQuestions();
@@ -115,10 +127,10 @@ function QuizEditor() {
 
   const handleDeleteQuestion = async (questionId: string) => {
     if (!confirm('Delete this question?')) return;
-    
+
     try {
       await quizAPI.deleteQuestion(questionId);
-      setQuestions(questions.filter(q => q.id !== questionId));
+      setQuestions(questions?.filter(q => q.id !== questionId) || []);
     } catch (err) {
       alert('Failed to delete question');
       console.error(err);
@@ -126,19 +138,25 @@ function QuizEditor() {
   };
 
   const moveQuestion = async (index: number, direction: 'up' | 'down') => {
-    if (!id || isNewQuiz) return;
-    
+    if (!id || isNewQuiz || !questions) return;
+
     const newQuestions = [...questions];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    
+
     if (targetIndex < 0 || targetIndex >= newQuestions.length) return;
-    
-    [newQuestions[index], newQuestions[targetIndex]] = [newQuestions[targetIndex], newQuestions[index]];
-    
+
+    [newQuestions[index], newQuestions[targetIndex]] = [
+      newQuestions[targetIndex],
+      newQuestions[index],
+    ];
+
     setQuestions(newQuestions);
-    
+
     try {
-      await quizAPI.reorderQuestions(id, newQuestions.map(q => q.id));
+      await quizAPI.reorderQuestions(
+        id,
+        newQuestions.map(q => q.id)
+      );
     } catch (err) {
       console.error('Failed to reorder:', err);
       loadQuestions(); // Reload on error
@@ -153,25 +171,40 @@ function QuizEditor() {
     );
   }
 
+  // Ensure questions is always an array
+  const safeQuestions = Array.isArray(questions) ? questions : [];
+
   return (
     <div className="admin-container">
       <header className="admin-header">
         <div>
-          <Link to="/admin/quizzes" className="btn-back"><FaArrowLeft /> Quiz Library</Link>
-          <h1>{isNewQuiz ? <><FaPlusCircle /> Create New Quiz</> : <><FaEdit /> Edit Quiz</>}</h1>
+          <Link to="/admin/quizzes" className="btn-back">
+            <FaArrowLeft /> Quiz Library
+          </Link>
+          <h1>
+            {isNewQuiz ? (
+              <>
+                <FaPlusCircle /> Create New Quiz
+              </>
+            ) : (
+              <>
+                <FaEdit /> Edit Quiz
+              </>
+            )}
+          </h1>
         </div>
       </header>
 
       <div className="quiz-editor">
         <div className="editor-section">
           <h2>Quiz Details</h2>
-          
+
           <div className="form-group">
             <label>Title *</label>
             <input
               type="text"
               value={quiz.title}
-              onChange={(e) => setQuiz({ ...quiz, title: e.target.value })}
+              onChange={e => setQuiz({ ...quiz, title: e.target.value })}
               placeholder="Enter quiz title..."
               className="form-input"
             />
@@ -181,7 +214,7 @@ function QuizEditor() {
             <label>Description</label>
             <textarea
               value={quiz.description}
-              onChange={(e) => setQuiz({ ...quiz, description: e.target.value })}
+              onChange={e => setQuiz({ ...quiz, description: e.target.value })}
               placeholder="Describe your quiz..."
               className="form-textarea"
               rows={3}
@@ -194,7 +227,7 @@ function QuizEditor() {
               <input
                 type="text"
                 value={quiz.category}
-                onChange={(e) => setQuiz({ ...quiz, category: e.target.value })}
+                onChange={e => setQuiz({ ...quiz, category: e.target.value })}
                 placeholder="e.g., General Knowledge"
                 className="form-input"
               />
@@ -204,7 +237,9 @@ function QuizEditor() {
               <label>Difficulty</label>
               <select
                 value={quiz.difficulty}
-                onChange={(e) => setQuiz({ ...quiz, difficulty: e.target.value as any })}
+                onChange={e =>
+                  setQuiz({ ...quiz, difficulty: e.target.value as any })
+                }
                 className="form-select"
                 aria-label="Select difficulty level"
               >
@@ -220,46 +255,60 @@ function QuizEditor() {
               <input
                 type="checkbox"
                 checked={quiz.is_public}
-                onChange={(e) => setQuiz({ ...quiz, is_public: e.target.checked })}
+                onChange={e =>
+                  setQuiz({ ...quiz, is_public: e.target.checked })
+                }
               />
               <span>Make quiz public</span>
             </label>
           </div>
 
-          <button 
-            onClick={handleSaveQuiz} 
+          <button
+            onClick={handleSaveQuiz}
             disabled={saving}
             className="btn-primary"
           >
-            {saving ? 'Saving...' : <><FaSave /> Save Quiz</>}
+            {saving ? (
+              'Saving...'
+            ) : (
+              <>
+                <FaSave /> Save Quiz
+              </>
+            )}
           </button>
         </div>
 
         {!isNewQuiz && (
           <div className="editor-section">
             <div className="section-header">
-              <h2><MdQuiz /> Questions ({questions.length})</h2>
+              <h2>
+                <MdQuiz /> Questions ({safeQuestions.length})
+              </h2>
               <button onClick={handleAddQuestion} className="btn-primary">
                 <FaPlusCircle /> Add Question
               </button>
             </div>
 
-            {questions.length === 0 ? (
+            {safeQuestions.length === 0 ? (
               <div className="empty-state-small">
                 <p>No questions yet. Add your first question!</p>
               </div>
             ) : (
               <div className="questions-list">
-                {questions.map((question, index) => (
+                {safeQuestions.map((question, index) => (
                   <div key={question.id} className="question-item">
                     <div className="question-number">{index + 1}</div>
                     <div className="question-content">
-                      <div className="question-text">{question.question_text}</div>
+                      <div className="question-text">
+                        {question.question_text}
+                      </div>
                       <div className="question-options">
                         {question.options.map((opt, i) => (
-                          <span 
-                            key={i} 
-                            className={`option-tag ${i === question.correct_answer ? 'correct' : ''}`}
+                          <span
+                            key={i}
+                            className={`option-tag ${
+                              i === question.correct_answer ? 'correct' : ''
+                            }`}
                           >
                             {String.fromCharCode(65 + i)}. {opt}
                           </span>
@@ -267,7 +316,7 @@ function QuizEditor() {
                       </div>
                     </div>
                     <div className="question-actions">
-                      <button 
+                      <button
                         onClick={() => moveQuestion(index, 'up')}
                         disabled={index === 0}
                         className="btn-icon"
@@ -275,22 +324,22 @@ function QuizEditor() {
                       >
                         <FaArrowUp />
                       </button>
-                      <button 
+                      <button
                         onClick={() => moveQuestion(index, 'down')}
-                        disabled={index === questions.length - 1}
+                        disabled={index === safeQuestions.length - 1}
                         className="btn-icon"
                         title="Move down"
                       >
                         <FaArrowDown />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleEditQuestion(question)}
                         className="btn-icon"
                         title="Edit"
                       >
                         <FaEdit />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDeleteQuestion(question.id)}
                         className="btn-icon btn-danger"
                         title="Delete"
@@ -314,7 +363,7 @@ function QuizEditor() {
             setShowQuestionForm(false);
             setEditingQuestion(null);
           }}
-          nextDisplayOrder={questions.length + 1}
+          nextDisplayOrder={safeQuestions.length + 1}
         />
       )}
     </div>
@@ -322,4 +371,3 @@ function QuizEditor() {
 }
 
 export default QuizEditor;
-
