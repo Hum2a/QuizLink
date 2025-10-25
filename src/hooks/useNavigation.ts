@@ -8,6 +8,7 @@ import {
   getAdminRoutes,
   getDeveloperRoutes,
   routeGroups,
+  type AppRoute,
 } from '../navigation';
 
 export const useNavigation = () => {
