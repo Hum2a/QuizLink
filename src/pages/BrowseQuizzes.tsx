@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   FaArrowLeft,
@@ -6,10 +6,12 @@ import {
   FaBook,
   FaSearch,
   FaFilter,
+  FaEye,
 } from 'react-icons/fa';
 import type { QuizTemplate } from '../services/api';
 import { config } from '../config';
 import { userAuthService } from '../services/userAuth';
+import QuizPreview from '../components/QuizPreview';
 import '../styles/admin.css';
 
 function BrowseQuizzes() {
@@ -22,16 +24,17 @@ function BrowseQuizzes() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [categories, setCategories] = useState<string[]>([]);
+  const [previewQuiz, setPreviewQuiz] = useState<QuizTemplate | null>(null);
 
   useEffect(() => {
     loadQuizzes();
-  }, []);
+  }, [loadQuizzes]);
 
   useEffect(() => {
     filterQuizzes();
-  }, [searchTerm, categoryFilter, difficultyFilter, quizzes]);
+  }, [filterQuizzes]);
 
-  const loadQuizzes = async () => {
+  const loadQuizzes = useCallback(async () => {
     try {
       setLoading(true);
       const token = userAuthService.getToken();
@@ -69,9 +72,9 @@ function BrowseQuizzes() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
-  const filterQuizzes = () => {
+  const filterQuizzes = useCallback(() => {
     let filtered = [...quizzes];
 
     // Search filter
@@ -94,7 +97,7 @@ function BrowseQuizzes() {
     }
 
     setFilteredQuizzes(filtered);
-  };
+  }, [quizzes, searchTerm, categoryFilter, difficultyFilter]);
 
   if (loading) {
     return (
@@ -200,6 +203,12 @@ function BrowseQuizzes() {
                 </div>
 
                 <div className="quiz-actions">
+                  <button
+                    onClick={() => setPreviewQuiz(quiz)}
+                    className="btn-secondary btn-block"
+                  >
+                    <FaEye /> Preview Quiz
+                  </button>
                   <Link
                     to={`/create-game?quiz=${quiz.id}`}
                     className="btn-primary btn-block"
@@ -279,6 +288,18 @@ function BrowseQuizzes() {
           justify-content: center;
         }
       `}</style>
+
+      {/* Quiz Preview Modal */}
+      {previewQuiz && (
+        <QuizPreview
+          quiz={previewQuiz}
+          onClose={() => setPreviewQuiz(null)}
+          onPlay={() => {
+            setPreviewQuiz(null);
+            navigate(`/create-game?quiz=${previewQuiz.id}`);
+          }}
+        />
+      )}
     </div>
   );
 }
