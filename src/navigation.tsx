@@ -20,6 +20,7 @@ import MobileGameFlow from './components/MobileGameFlow';
 import MobileQuizBrowser from './components/MobileQuizBrowser';
 import MobileGesturesDemo from './pages/MobileGesturesDemo';
 import RecommendationDashboard from './pages/RecommendationDashboard';
+import SocialDashboard from './pages/SocialDashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 export interface AppRoute {
@@ -83,6 +84,13 @@ export const navigationRoutes: AppRoute[] = [
     element: <RecommendationDashboard />,
     title: 'Recommendations',
     description: 'Personalized quiz recommendations',
+    requiresAuth: true,
+  },
+  {
+    path: '/social',
+    element: <SocialDashboard />,
+    title: 'Social Hub',
+    description: 'Connect with friends and compete',
     requiresAuth: true,
   },
   {

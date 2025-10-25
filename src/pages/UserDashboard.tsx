@@ -15,6 +15,7 @@ import {
   FaUsers,
   FaCode,
   FaLightbulb,
+  FaComments,
 } from 'react-icons/fa';
 import { IoStatsChart } from 'react-icons/io5';
 import { MdAdminPanelSettings } from 'react-icons/md';
@@ -179,6 +180,14 @@ function UserDashboard() {
               </div>
               <h3>Recommendations</h3>
               <p>Discover personalized quiz suggestions</p>
+            </Link>
+
+            <Link to="/social" className="action-card">
+              <div className="action-icon">
+                <FaComments size={48} />
+              </div>
+              <h3>Social Hub</h3>
+              <p>Connect with friends and compete</p>
             </Link>
 
             <Link to="/profile" className="action-card">
