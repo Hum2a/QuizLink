@@ -164,12 +164,20 @@ function UserDashboard() {
               <p>Explore public quizzes to play</p>
             </Link>
 
-            <Link to="/profile" className="action-card">
+            <Link to="/achievements" className="action-card">
               <div className="action-icon">
                 <FaTrophy size={48} />
               </div>
-              <h3>My Stats</h3>
-              <p>View your game history and achievements</p>
+              <h3>Achievements</h3>
+              <p>Track your progress and unlock badges</p>
+            </Link>
+
+            <Link to="/profile" className="action-card">
+              <div className="action-icon">
+                <FaUser size={48} />
+              </div>
+              <h3>Profile</h3>
+              <p>Manage your account settings</p>
             </Link>
           </div>
         </div>

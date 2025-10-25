@@ -15,6 +15,7 @@ import BrowseQuizzes from './pages/BrowseQuizzes';
 import CreateGame from './pages/CreateGame';
 import JoinGame from './pages/JoinGame';
 import DeveloperDashboard from './pages/DeveloperDashboard';
+import AchievementDashboard from './pages/AchievementDashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 export interface AppRoute {
@@ -67,10 +68,10 @@ export const navigationRoutes: AppRoute[] = [
     requiresAuth: true,
   },
   {
-    path: '/dashboard',
-    element: <UserDashboard />,
-    title: 'Dashboard',
-    description: 'Main user dashboard',
+    path: '/achievements',
+    element: <AchievementDashboard />,
+    title: 'Achievements',
+    description: 'Track your achievements and progress',
     requiresAuth: true,
   },
   {

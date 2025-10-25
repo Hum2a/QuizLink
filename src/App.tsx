@@ -3,15 +3,18 @@ import './App.css';
 import './styles/themes.css';
 import { navigationRoutes } from './navigation';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { AchievementProvider } from './contexts/AchievementContext';
 
 function App() {
   return (
     <ThemeProvider>
-      <Routes>
-        {navigationRoutes.map(route => (
-          <Route key={route.path} path={route.path} element={route.element} />
-        ))}
-      </Routes>
+      <AchievementProvider>
+        <Routes>
+          {navigationRoutes.map(route => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
+        </Routes>
+      </AchievementProvider>
     </ThemeProvider>
   );
 }
