@@ -131,12 +131,12 @@ if [[ "$SHOW_CURRENT" == true ]]; then
     echo "No releases found"
     exit 0
   fi
-  
+
   TAG_COMMIT=$(git ls-remote origin refs/tags/"$LATEST_TAG" | cut -f 1)
   echo "Latest release tag: $LATEST_TAG"
   echo "Tag points to commit: $TAG_COMMIT"
   echo "Current commit: $CURRENT_COMMIT"
-  
+
   if [[ "$TAG_COMMIT" == "$CURRENT_COMMIT" ]]; then
     echo "Status: Current commit is tagged"
   else
@@ -198,13 +198,13 @@ EXISTING_LOCAL=$(git tag -l "$NEW_TAG")
 # Delete existing tags if found
 if [[ -n "$EXISTING_REMOTE" || -n "$EXISTING_LOCAL" ]]; then
   echo "Tag $NEW_TAG already exists - deleting old version"
-  
+
   # Delete remote tag
   if [[ -n "$EXISTING_REMOTE" ]]; then
     echo "Deleting remote tag: $NEW_TAG"
     git push --delete origin "$NEW_TAG" >/dev/null 2>&1 || true
   fi
-  
+
   # Delete local tag
   if [[ -n "$EXISTING_LOCAL" ]]; then
     echo "Deleting local tag: $NEW_TAG"
@@ -229,7 +229,36 @@ git tag "$NEW_TAG" && git push origin "$NEW_TAG"
 if [[ $? -eq 0 ]]; then
   echo "Successfully created release tag: $NEW_TAG"
   echo "Tag URL: https://github.com/$(git remote get-url origin | sed -E 's/.*[:/]([^/]+\/[^/]+)\.git.*/\1/')/releases/tag/$NEW_TAG"
+
+  # Update version numbers
+  echo ""
+  echo "📦 Updating version numbers..."
+  VERSION_NUMBER=${NEW_TAG#v}  # Remove 'v' prefix
+  node scripts/update-version.js "$VERSION_NUMBER"
+
+  if [[ $? -eq 0 ]]; then
+    echo "✅ Version numbers updated successfully"
+  else
+    echo "⚠️  Warning: Version update failed"
+  fi
+
+  # Update changelog
+  echo ""
+  echo "📝 Updating changelog..."
+  node scripts/update-changelog.js "$VERSION_NUMBER" "$INCREMENT"
+
+  if [[ $? -eq 0 ]]; then
+    echo "✅ Changelog updated successfully"
+    echo ""
+    echo "🎉 Release $NEW_TAG completed!"
+    echo "📋 Don't forget to commit the changes:"
+    echo "   git add package.json workers/package.json VERSION README.md CHANGELOG.md"
+    echo "   git commit -m \"Update version and changelog for $NEW_TAG\""
+    echo "   git push"
+  else
+    echo "⚠️  Warning: Changelog update failed, but release tag was created"
+  fi
 else
   echo "Error: Failed to create tag"
   exit 1
-fi 
+fi
