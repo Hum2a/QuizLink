@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { quizAPI } from '../services/api';
 import type { QuizTemplate, Question } from '../services/api';
@@ -34,14 +34,7 @@ function QuizEditor() {
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
 
-  useEffect(() => {
-    if (!isNewQuiz && id) {
-      loadQuiz();
-      loadQuestions();
-    }
-  }, [id]);
-
-  const loadQuiz = async () => {
+  const loadQuiz = useCallback(async () => {
     if (!id) return;
     try {
       setLoading(true);
@@ -53,9 +46,9 @@ function QuizEditor() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const loadQuestions = async () => {
+  const loadQuestions = useCallback(async () => {
     if (!id) return;
     try {
       const data = await quizAPI.getQuestions(id);
@@ -65,7 +58,14 @@ function QuizEditor() {
       console.error('Failed to load questions:', err);
       setQuestions([]); // Set to empty array on error
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (!isNewQuiz && id) {
+      loadQuiz();
+      loadQuestions();
+    }
+  }, [id, isNewQuiz, loadQuiz, loadQuestions]);
 
   const handleSaveQuiz = async () => {
     if (!quiz.title || !quiz.category) {
@@ -77,7 +77,7 @@ function QuizEditor() {
       setSaving(true);
 
       if (isNewQuiz) {
-        const { id: newId } = await quizAPI.createQuiz(quiz as any);
+        const { id: newId } = await quizAPI.createQuiz(quiz as QuizTemplate);
         navigate(`/admin/quizzes/${newId}`);
       } else if (id) {
         await quizAPI.updateQuiz(id, quiz);
@@ -238,7 +238,10 @@ function QuizEditor() {
               <select
                 value={quiz.difficulty}
                 onChange={e =>
-                  setQuiz({ ...quiz, difficulty: e.target.value as any })
+                  setQuiz({
+                    ...quiz,
+                    difficulty: e.target.value as 'easy' | 'medium' | 'hard',
+                  })
                 }
                 className="form-select"
                 aria-label="Select difficulty level"
@@ -366,6 +369,25 @@ function QuizEditor() {
           nextDisplayOrder={safeQuestions.length + 1}
         />
       )}
+      
+      <style>{`
+        .header-actions {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+        
+        .save-status {
+          color: var(--color-text-secondary);
+          font-size: 0.875rem;
+        }
+        
+        .save-status small {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+      `}</style>
     </div>
   );
 }
