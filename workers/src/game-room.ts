@@ -198,6 +198,7 @@ export class GameRoom extends DurableObject {
         await this.handleRevealAnswers(webSocket);
         break;
       case 'next-question':
+        console.log('Received next-question message');
         await this.handleNextQuestion(webSocket);
         break;
       case 'reset-game':
@@ -393,11 +394,29 @@ export class GameRoom extends DurableObject {
   }
 
   async handleNextQuestion(webSocket: WebSocket) {
+    console.log('handleNextQuestion called');
     const playerId = this.sessions.get(webSocket);
-    if (!this.gameState || !playerId) return;
+    if (!this.gameState || !playerId) {
+      console.log('No game state or player ID');
+      return;
+    }
 
     const player = this.gameState.players.find(p => p.id === playerId);
-    if (!player || !player.isAdmin) return;
+    if (!player || !player.isAdmin) {
+      console.log(
+        'Player not found or not admin:',
+        player?.name,
+        player?.isAdmin
+      );
+      return;
+    }
+
+    console.log(
+      'Current question:',
+      this.gameState.currentQuestion,
+      'Total questions:',
+      this.gameState.questions.length
+    );
 
     if (this.gameState.currentQuestion < this.gameState.questions.length - 1) {
       // Move to next question
@@ -405,8 +424,10 @@ export class GameRoom extends DurableObject {
       this.gameState.showResults = false;
       this.gameState.answers = {};
       this.gameState.players.forEach(p => (p.hasAnswered = false));
+      console.log('Moved to question:', this.gameState.currentQuestion);
     } else {
       // Quiz ended
+      console.log('Quiz ended - all questions completed');
       this.gameState.isQuizActive = false;
       this.gameState.status = 'completed';
       this.gameState.endedAt = Date.now();
@@ -418,11 +439,13 @@ export class GameRoom extends DurableObject {
     }
 
     await this.saveState();
+    console.log('Game state saved');
 
     this.broadcast({
       type: 'game-state-update',
       payload: this.getPublicGameState(),
     });
+    console.log('Game state broadcasted');
   }
 
   async handleResetGame(webSocket: WebSocket) {

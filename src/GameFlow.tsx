@@ -291,8 +291,12 @@ function GameFlow() {
   };
 
   const handleNextQuestion = () => {
+    console.log('handleNextQuestion called - emitting next-question');
     if (wsClient && isAdmin) {
+      console.log('WebSocket client exists and user is admin, emitting next-question');
       wsClient.emit('next-question');
+    } else {
+      console.log('Cannot emit next-question - wsClient:', !!wsClient, 'isAdmin:', isAdmin);
     }
   };
 
