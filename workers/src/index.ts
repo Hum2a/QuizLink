@@ -786,6 +786,28 @@ async function handleUserAPI(
       });
     }
 
+    // GET /api/user/permissions - Get user permissions and roles
+    if (url.pathname === '/api/user/permissions' && request.method === 'GET') {
+      const { RolePermissions } = await import('./role-permissions');
+      const rolePermissions = new RolePermissions(env.DATABASE_URL);
+
+      const userRoles = await rolePermissions.getUserRoles(payload.userId);
+      const user = await userAuthService.getUserFromToken(token);
+
+      return new Response(
+        JSON.stringify({
+          user_id: payload.userId,
+          email: user?.email,
+          username: user?.username,
+          display_name: user?.display_name,
+          roles: userRoles,
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     return new Response(JSON.stringify({ error: 'Endpoint not found' }), {
       status: 404,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -980,6 +1002,59 @@ async function handleAdminAPI(
     if (url.pathname === '/api/admin/categories' && request.method === 'GET') {
       const categories = await adminAPI.getCategories();
       return new Response(JSON.stringify(categories), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Role Management Endpoints
+    const { RolePermissions } = await import('./role-permissions');
+    const rolePermissions = new RolePermissions(env.DATABASE_URL);
+
+    // GET /api/admin/users-with-roles - Get all users with their roles
+    if (
+      url.pathname === '/api/admin/users-with-roles' &&
+      request.method === 'GET'
+    ) {
+      const users = await rolePermissions.getUsersWithRoles();
+      return new Response(JSON.stringify(users), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // GET /api/admin/roles - Get all roles
+    if (url.pathname === '/api/admin/roles' && request.method === 'GET') {
+      const roles = await rolePermissions.getAllRoles();
+      return new Response(JSON.stringify(roles), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // POST /api/admin/assign-role - Assign role to user
+    if (
+      url.pathname === '/api/admin/assign-role' &&
+      request.method === 'POST'
+    ) {
+      const body = (await request.json()) as {
+        userId: string;
+        roleName: string;
+      };
+      await rolePermissions.assignRole(body.userId, body.roleName, 'system');
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // DELETE /api/admin/remove-role - Remove role from user
+    if (
+      url.pathname === '/api/admin/remove-role' &&
+      request.method === 'DELETE'
+    ) {
+      const body = (await request.json()) as {
+        userId: string;
+        roleName: string;
+      };
+      await rolePermissions.removeRole(body.userId, body.roleName);
+      return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

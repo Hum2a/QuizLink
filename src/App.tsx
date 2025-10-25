@@ -18,7 +18,8 @@ import CreateQuiz from './pages/CreateQuiz';
 import BrowseQuizzes from './pages/BrowseQuizzes';
 import CreateGame from './pages/CreateGame';
 import JoinGame from './pages/JoinGame';
-import ProtectedRoute from './components/ProtectedRoute';
+import DeveloperDashboard from './pages/DeveloperDashboard';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -56,6 +57,9 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      {/* Developer dashboard (developer role only) */}
+      <Route path="/developer" element={<DeveloperDashboard />} />
       <Route
         path="/admin/quizzes"
         element={
