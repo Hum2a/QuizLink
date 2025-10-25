@@ -33,15 +33,19 @@ export class WebSocketClient {
 
         this.ws.onmessage = event => {
           try {
+            console.log('Raw WebSocket message received:', event.data);
             const message: WebSocketMessage = JSON.parse(event.data);
-            console.log('Received WebSocket message:', message);
+            console.log('Parsed WebSocket message:', message);
             const handler = this.messageHandlers.get(message.type);
             if (handler) {
+              console.log('Found handler for message type:', message.type);
               handler(message.payload);
             } else {
+              console.log('No handler found for message type:', message.type);
               // Try catch-all handler
               const catchAllHandler = this.messageHandlers.get('*');
               if (catchAllHandler) {
+                console.log('Using catch-all handler');
                 catchAllHandler(message);
               }
             }

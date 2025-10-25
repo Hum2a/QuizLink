@@ -75,10 +75,13 @@ export class GameRoom extends DurableObject {
 
     if (upgradeHeader === 'websocket') {
       console.log('WebSocket upgrade request received in Durable Object');
+      console.log('Creating WebSocket pair...');
       const pair = new WebSocketPair();
       const [client, server] = Object.values(pair);
+      console.log('WebSocket pair created, handling session...');
 
       await this.handleSession(server);
+      console.log('Session handled, returning response...');
 
       return new Response(null, {
         status: 101,
@@ -100,7 +103,9 @@ export class GameRoom extends DurableObject {
 
   async handleSession(webSocket: WebSocket) {
     console.log('Handling new WebSocket session');
+    console.log('WebSocket readyState:', webSocket.readyState);
     this.state.acceptWebSocket(webSocket);
+    console.log('WebSocket accepted by state');
 
     // Send current game state to new connection
     if (this.gameState) {
@@ -115,7 +120,9 @@ export class GameRoom extends DurableObject {
 
     webSocket.addEventListener('message', async msg => {
       try {
+        console.log('Received raw message:', msg.data);
         const data: WebSocketMessage = JSON.parse(msg.data as string);
+        console.log('Parsed message:', data);
         await this.handleMessage(webSocket, data);
       } catch (error) {
         console.error('Error handling message:', error);
@@ -144,8 +151,10 @@ export class GameRoom extends DurableObject {
   }
 
   async handleMessage(webSocket: WebSocket, message: WebSocketMessage) {
+    console.log('handleMessage called with:', message);
     switch (message.type) {
       case 'join-game':
+        console.log('Handling join-game message');
         await this.handleJoinGame(webSocket, message.payload);
         break;
       case 'start-quiz':
