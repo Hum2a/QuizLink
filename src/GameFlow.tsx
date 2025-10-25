@@ -97,6 +97,35 @@ function GameFlow() {
         setConnectionStatus('error');
       });
 
+      client.on('game-closed', ({ message, gameState }) => {
+        console.log('Game closed:', message);
+        addLogEntry(`Game closed: ${message}`);
+        setGameState(gameState);
+        // Navigate back to dashboard after a short delay
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 3000);
+      });
+
+      client.on('player-left', ({ message, playerName, gameState }) => {
+        console.log('Player left:', message);
+        addLogEntry(`${playerName} left the game`);
+        setGameState(gameState);
+      });
+
+      // Handle WebSocket close events
+      client.on('close', () => {
+        console.log('WebSocket connection closed');
+        addLogEntry('Connection closed');
+        setConnectionStatus('disconnected');
+        // Navigate to dashboard if we were in a game
+        if (hasJoined) {
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
+        }
+      });
+
       // Add a catch-all handler for debugging
       client.on('*', message => {
         console.log('Received unknown message:', message);
@@ -291,6 +320,22 @@ function GameFlow() {
     }
   };
 
+  const handleCloseGame = () => {
+    if (wsClient && isAdmin) {
+      wsClient.emit('close-game');
+    }
+  };
+
+  const handleLeaveGame = () => {
+    if (wsClient) {
+      wsClient.emit('leave-game');
+      // Navigate away immediately since the server will close the connection
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1000);
+    }
+  };
+
   // Don't render if no user
   if (!currentUser) {
     return null;
@@ -353,6 +398,8 @@ function GameFlow() {
           onResetGame={handleResetGame}
           onToggleRoomLock={handleToggleRoomLock}
           onUpdatePlayerIcon={handleUpdatePlayerIcon}
+          onCloseGame={handleCloseGame}
+          onLeaveGame={handleLeaveGame}
         />
       </div>
     );

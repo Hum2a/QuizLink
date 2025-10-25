@@ -206,6 +206,12 @@ export class GameRoom extends DurableObject {
       case 'update-player-icon':
         await this.handleUpdatePlayerIcon(webSocket, message.payload);
         break;
+      case 'close-game':
+        await this.handleCloseGame(webSocket);
+        break;
+      case 'leave-game':
+        await this.handleLeaveGame(webSocket);
+        break;
       default:
         this.send(webSocket, {
           type: 'error',
@@ -506,6 +512,57 @@ export class GameRoom extends DurableObject {
     );
   }
 
+  async handleCloseGame(webSocket: WebSocket) {
+    console.log('Handling close-game request');
+
+    if (!this.gameState) {
+      this.send(webSocket, {
+        type: 'error',
+        payload: { message: 'Game not initialized' },
+      });
+      return;
+    }
+
+    // Check if the requester is an admin
+    const requesterSocketId = this.getSocketId(webSocket);
+    const requester = this.gameState.players.find(
+      p => p.socketId === requesterSocketId
+    );
+
+    if (!requester || !requester.isAdmin) {
+      this.send(webSocket, {
+        type: 'error',
+        payload: { message: 'Only admins can close the game' },
+      });
+      return;
+    }
+
+    // Update game status to completed
+    this.gameState.status = 'completed';
+    this.gameState.endedAt = Date.now();
+    this.gameState.isQuizActive = false;
+
+    // Save the updated state
+    await this.saveState();
+
+    // Broadcast game closure to all players
+    this.broadcast({
+      type: 'game-closed',
+      payload: {
+        message: 'Game has been closed by the host',
+        gameState: this.getGameState(),
+      },
+    });
+
+    // Close all WebSocket connections
+    const sockets = this.state.getWebSockets();
+    sockets.forEach(socket => {
+      socket.close(1000, 'Game closed by host');
+    });
+
+    console.log('Game closed successfully by admin:', requester.name);
+  }
+
   async saveState() {
     if (this.gameState) {
       await this.state.storage.put('gameState', this.gameState);
@@ -517,6 +574,85 @@ export class GameRoom extends DurableObject {
     sockets.forEach(socket => {
       this.send(socket, message);
     });
+  }
+
+  getSocketId(webSocket: WebSocket): string | null {
+    // Since we're using WebSocket objects as keys in the sessions Map,
+    // we need to find the player ID associated with this WebSocket
+    return this.sessions.get(webSocket) || null;
+  }
+
+  async handleLeaveGame(webSocket: WebSocket) {
+    console.log('Handling leave-game request');
+
+    if (!this.gameState) {
+      this.send(webSocket, {
+        type: 'error',
+        payload: { message: 'Game not initialized' },
+      });
+      return;
+    }
+
+    // Get the player leaving
+    const playerId = this.sessions.get(webSocket);
+    if (!playerId) {
+      this.send(webSocket, {
+        type: 'error',
+        payload: { message: 'Player not found in session' },
+      });
+      return;
+    }
+
+    const leaver = this.gameState.players.find(p => p.id === playerId);
+
+    if (!leaver) {
+      this.send(webSocket, {
+        type: 'error',
+        payload: { message: 'Player not found' },
+      });
+      return;
+    }
+
+    console.log('Player leaving:', leaver.name);
+
+    // Remove the player from the game
+    this.gameState.players = this.gameState.players.filter(
+      p => p.id !== playerId
+    );
+
+    // Remove from sessions
+    this.sessions.delete(webSocket);
+
+    // If the leaving player was an admin and there are other players, promote another player to admin
+    if (leaver.isAdmin && this.gameState.players.length > 0) {
+      // Find the first non-admin player and make them admin
+      const newAdminIndex = this.gameState.players.findIndex(p => !p.isAdmin);
+      if (newAdminIndex !== -1) {
+        this.gameState.players[newAdminIndex].isAdmin = true;
+        console.log(
+          'Promoted new admin:',
+          this.gameState.players[newAdminIndex].name
+        );
+      }
+    }
+
+    // Save the updated state
+    await this.saveState();
+
+    // Broadcast player left message to remaining players
+    this.broadcast({
+      type: 'player-left',
+      payload: {
+        message: `${leaver.name} has left the game`,
+        playerName: leaver.name,
+        gameState: this.getGameState(),
+      },
+    });
+
+    // Close the WebSocket connection for the leaving player
+    webSocket.close(1000, 'Player left game');
+
+    console.log('Player left successfully:', leaver.name);
   }
 
   send(socket: WebSocket, message: WebSocketMessage) {

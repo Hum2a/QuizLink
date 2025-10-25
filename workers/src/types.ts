@@ -42,6 +42,10 @@ export interface WebSocketMessage {
     | 'next-question'
     | 'reset-game'
     | 'update-player-icon'
+    | 'close-game'
+    | 'leave-game'
+    | 'player-left'
+    | 'game-closed'
     | 'game-state-update'
     | 'error';
   payload?: any;

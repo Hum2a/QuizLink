@@ -13,6 +13,7 @@ import {
   FaSave,
   FaTimes,
   FaEdit,
+  FaPowerOff,
 } from 'react-icons/fa';
 import { useState } from 'react';
 import type { GameState } from '../types';
@@ -31,6 +32,8 @@ interface GameLobbyProps {
   onResetGame?: () => void;
   onToggleRoomLock?: () => void;
   onUpdatePlayerIcon?: (playerId: string, iconName: string) => void;
+  onCloseGame?: () => void;
+  onLeaveGame?: () => void;
 }
 
 function GameLobby({
@@ -45,11 +48,15 @@ function GameLobby({
   onResetGame,
   onToggleRoomLock,
   onUpdatePlayerIcon,
+  onCloseGame,
+  onLeaveGame,
 }: GameLobbyProps) {
   const currentPlayer = gameState.players.find(p => p.id === playerId);
   const [showSettings, setShowSettings] = useState(false);
   const [showPlayerManagement, setShowPlayerManagement] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [roomSettings, setRoomSettings] = useState({
     maxPlayers: 10,
     timePerQuestion: 30,
@@ -116,9 +123,18 @@ function GameLobby({
               <span className="player-role">{isAdmin ? 'Host' : 'Player'}</span>
             </div>
           </div>
-          <button onClick={onLogout} className="logout-btn">
-            <FaSignOutAlt /> Logout
-          </button>
+          <div className="user-actions">
+            <button
+              onClick={() => setShowLeaveConfirm(true)}
+              className="btn-leave-game"
+              title="Leave Game"
+            >
+              <FaSignOutAlt /> Leave Game
+            </button>
+            <button onClick={onLogout} className="logout-btn">
+              <FaSignOutAlt /> Logout
+            </button>
+          </div>
         </div>
       </div>
 
@@ -223,6 +239,14 @@ function GameLobby({
               >
                 {roomSettings.roomLocked ? <FaLock /> : <FaUnlock />}
                 <span>{roomSettings.roomLocked ? 'Unlock' : 'Lock'}</span>
+              </button>
+              <button
+                onClick={() => setShowCloseConfirm(true)}
+                className="btn-secondary danger"
+                title="Close Game"
+              >
+                <FaPowerOff />
+                <span>Close</span>
               </button>
             </div>
 
@@ -429,6 +453,91 @@ function GameLobby({
           friends to invite them!
         </p>
       </div>
+
+      {/* Close Game Confirmation Modal */}
+      {showCloseConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Close Game</h3>
+              <button
+                className="btn-close"
+                onClick={() => setShowCloseConfirm(false)}
+                title="Cancel"
+                aria-label="Cancel"
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to close this game?</p>
+              <p className="warning-text">
+                This will end the game for all players and cannot be undone.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-cancel"
+                onClick={() => setShowCloseConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-danger"
+                onClick={() => {
+                  onCloseGame?.();
+                  setShowCloseConfirm(false);
+                }}
+              >
+                <FaPowerOff /> Close Game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Leave Game Confirmation Modal */}
+      {showLeaveConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Leave Game</h3>
+              <button
+                className="btn-close"
+                onClick={() => setShowLeaveConfirm(false)}
+                title="Cancel"
+                aria-label="Cancel"
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to leave this game?</p>
+              <p className="warning-text">
+                You will be removed from the game and redirected to the
+                dashboard.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-cancel"
+                onClick={() => setShowLeaveConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-warning"
+                onClick={() => {
+                  onLeaveGame?.();
+                  setShowLeaveConfirm(false);
+                }}
+              >
+                <FaSignOutAlt /> Leave Game
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Icon Picker Modal */}
       <IconPicker
