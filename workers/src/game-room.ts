@@ -203,6 +203,9 @@ export class GameRoom extends DurableObject {
       case 'reset-game':
         await this.handleResetGame(webSocket);
         break;
+      case 'update-player-icon':
+        await this.handleUpdatePlayerIcon(webSocket, message.payload);
+        break;
       default:
         this.send(webSocket, {
           type: 'error',
@@ -456,6 +459,51 @@ export class GameRoom extends DurableObject {
       answers: this.gameState.answers,
       roomCode: this.gameState.roomCode,
     };
+  }
+
+  async handleUpdatePlayerIcon(
+    webSocket: WebSocket,
+    payload: { playerId: string; iconName: string }
+  ) {
+    console.log('Handling update-player-icon:', payload);
+
+    if (!this.gameState) {
+      this.send(webSocket, {
+        type: 'error',
+        payload: { message: 'Game not initialized' },
+      });
+      return;
+    }
+
+    // Find the player and update their icon
+    const playerIndex = this.gameState.players.findIndex(
+      p => p.id === payload.playerId
+    );
+    if (playerIndex === -1) {
+      this.send(webSocket, {
+        type: 'error',
+        payload: { message: 'Player not found' },
+      });
+      return;
+    }
+
+    // Update the player's icon
+    this.gameState.players[playerIndex].iconName = payload.iconName;
+
+    // Save the updated state
+    await this.saveState();
+
+    // Broadcast the updated game state to all players
+    this.broadcast({
+      type: 'game-state-update',
+      payload: this.getGameState(),
+    });
+
+    console.log(
+      'Player icon updated successfully:',
+      payload.playerId,
+      payload.iconName
+    );
   }
 
   async saveState() {

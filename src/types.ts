@@ -4,6 +4,7 @@ export interface Player {
   score: number;
   isAdmin: boolean;
   hasAnswered: boolean;
+  iconName?: string;
 }
 
 export interface Question {
@@ -22,4 +23,3 @@ export interface GameState {
   answers: Record<string, number>;
   roomCode: string;
 }
-

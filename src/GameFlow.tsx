@@ -261,6 +261,36 @@ function GameFlow() {
     }
   };
 
+  const handleKickPlayer = (playerId: string) => {
+    if (wsClient && isAdmin) {
+      wsClient.emit('kick-player', { playerId });
+    }
+  };
+
+  const handleToggleMute = (playerId: string) => {
+    if (wsClient && isAdmin) {
+      wsClient.emit('toggle-mute', { playerId });
+    }
+  };
+
+  const handleUpdateSettings = (settings: any) => {
+    if (wsClient && isAdmin) {
+      wsClient.emit('update-settings', settings);
+    }
+  };
+
+  const handleToggleRoomLock = () => {
+    if (wsClient && isAdmin) {
+      wsClient.emit('toggle-room-lock');
+    }
+  };
+
+  const handleUpdatePlayerIcon = (playerId: string, iconName: string) => {
+    if (wsClient) {
+      wsClient.emit('update-player-icon', { playerId, iconName });
+    }
+  };
+
   // Don't render if no user
   if (!currentUser) {
     return null;
@@ -317,6 +347,12 @@ function GameFlow() {
           isAdmin={isAdmin}
           onStartQuiz={handleStartQuiz}
           onLogout={handleLogout}
+          onKickPlayer={handleKickPlayer}
+          onToggleMute={handleToggleMute}
+          onUpdateSettings={handleUpdateSettings}
+          onResetGame={handleResetGame}
+          onToggleRoomLock={handleToggleRoomLock}
+          onUpdatePlayerIcon={handleUpdatePlayerIcon}
         />
       </div>
     );

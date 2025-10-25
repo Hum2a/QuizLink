@@ -6,6 +6,7 @@ export interface Player {
   isAdmin: boolean;
   hasAnswered: boolean;
   joinedAt: number;
+  iconName?: string;
 }
 
 export interface Question {
@@ -33,7 +34,16 @@ export interface GameState {
 }
 
 export interface WebSocketMessage {
-  type: 'join-game' | 'start-quiz' | 'submit-answer' | 'reveal-answers' | 'next-question' | 'reset-game' | 'game-state-update' | 'error';
+  type:
+    | 'join-game'
+    | 'start-quiz'
+    | 'submit-answer'
+    | 'reveal-answers'
+    | 'next-question'
+    | 'reset-game'
+    | 'update-player-icon'
+    | 'game-state-update'
+    | 'error';
   payload?: any;
 }
 
@@ -42,4 +52,3 @@ export interface Env {
   HYPERDRIVE: Hyperdrive;
   DATABASE_URL: string;
 }
-

@@ -1,5 +1,23 @@
-import { FaUsers, FaPlay, FaCrown, FaSignOutAlt } from 'react-icons/fa';
+import {
+  FaUsers,
+  FaPlay,
+  FaCrown,
+  FaSignOutAlt,
+  FaCog,
+  FaUserMinus,
+  FaCopy,
+  FaRedo,
+  FaVolumeUp,
+  FaLock,
+  FaUnlock,
+  FaSave,
+  FaTimes,
+  FaEdit,
+} from 'react-icons/fa';
+import { useState } from 'react';
 import type { GameState } from '../types';
+import IconPicker from './IconPicker';
+import IconRenderer from './IconRenderer';
 
 interface GameLobbyProps {
   gameState: GameState;
@@ -7,6 +25,12 @@ interface GameLobbyProps {
   isAdmin: boolean;
   onStartQuiz: () => void;
   onLogout: () => void;
+  onKickPlayer?: (playerId: string) => void;
+  onToggleMute?: (playerId: string) => void;
+  onUpdateSettings?: (settings: Record<string, any>) => void;
+  onResetGame?: () => void;
+  onToggleRoomLock?: () => void;
+  onUpdatePlayerIcon?: (playerId: string, iconName: string) => void;
 }
 
 function GameLobby({
@@ -15,8 +39,45 @@ function GameLobby({
   isAdmin,
   onStartQuiz,
   onLogout,
+  onKickPlayer,
+  onToggleMute,
+  onUpdateSettings,
+  onResetGame,
+  onToggleRoomLock,
+  onUpdatePlayerIcon,
 }: GameLobbyProps) {
   const currentPlayer = gameState.players.find(p => p.id === playerId);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showPlayerManagement, setShowPlayerManagement] = useState(false);
+  const [showIconPicker, setShowIconPicker] = useState(false);
+  const [roomSettings, setRoomSettings] = useState({
+    maxPlayers: 10,
+    timePerQuestion: 30,
+    allowSpectators: true,
+    roomLocked: false,
+    showLeaderboard: true,
+    allowLateJoin: true,
+  });
+
+  const handleIconSelect = (iconName: string) => {
+    console.log('Icon selected:', iconName);
+    console.log('Current player:', currentPlayer);
+    if (onUpdatePlayerIcon && currentPlayer) {
+      console.log(
+        'Calling onUpdatePlayerIcon with:',
+        currentPlayer.id,
+        iconName
+      );
+      onUpdatePlayerIcon(currentPlayer.id, iconName);
+    }
+    setShowIconPicker(false);
+  };
+
+  const getPlayerIcon = (player: { iconName?: string } | undefined) => {
+    console.log('getPlayerIcon called with player:', player);
+    console.log('Player iconName:', player?.iconName);
+    return <IconRenderer iconName={player?.iconName} size={24} />;
+  };
 
   return (
     <div className="game-lobby">
@@ -31,11 +92,29 @@ function GameLobby({
 
         <div className="player-info">
           <div className="current-player">
-            <span className="player-name">
-              {currentPlayer?.name}
-              {isAdmin && <FaCrown className="admin-crown" />}
-            </span>
-            <span className="player-role">{isAdmin ? 'Host' : 'Player'}</span>
+            <div className="user-avatar-container">
+              <div
+                className="user-avatar"
+                onClick={() => setShowIconPicker(true)}
+              >
+                {getPlayerIcon(currentPlayer)}
+              </div>
+              <button
+                className="btn-edit-icon"
+                onClick={() => setShowIconPicker(true)}
+                title="Change Avatar"
+                aria-label="Change Avatar"
+              >
+                <FaEdit />
+              </button>
+            </div>
+            <div className="player-details">
+              <span className="player-name">
+                {currentPlayer?.name}
+                {isAdmin && <FaCrown className="admin-crown" />}
+              </span>
+              <span className="player-role">{isAdmin ? 'Host' : 'Player'}</span>
+            </div>
           </div>
           <button onClick={onLogout} className="logout-btn">
             <FaSignOutAlt /> Logout
@@ -56,9 +135,7 @@ function GameLobby({
                   player.id === playerId ? 'current-player' : ''
                 } ${player.isAdmin ? 'admin' : ''}`}
               >
-                <div className="player-avatar">
-                  {player.name.charAt(0).toUpperCase()}
-                </div>
+                <div className="player-avatar">{getPlayerIcon(player)}</div>
                 <div className="player-details">
                   <span className="player-name">
                     {player.name}
@@ -75,21 +152,259 @@ function GameLobby({
 
         {isAdmin && (
           <div className="admin-controls">
-            <h3>Host Controls</h3>
-            <button
-              onClick={onStartQuiz}
-              className="btn-start-quiz"
-              disabled={gameState.players.length < 1}
-            >
-              <FaPlay /> Start Quiz
-            </button>
-            <p className="start-hint">
-              {gameState.players.length < 1
-                ? 'Wait for players to join...'
-                : `Ready to start with ${gameState.players.length} player${
-                    gameState.players.length === 1 ? '' : 's'
-                  }!`}
-            </p>
+            <div className="admin-header">
+              <h3>
+                <FaCrown className="admin-icon" /> Host Controls
+              </h3>
+              <div className="admin-actions">
+                <button
+                  className="btn-admin-action"
+                  onClick={() => setShowSettings(!showSettings)}
+                  title="Game Settings"
+                >
+                  <FaCog />
+                  <span>Settings</span>
+                </button>
+                <button
+                  className="btn-admin-action"
+                  onClick={() => setShowPlayerManagement(!showPlayerManagement)}
+                  title="Player Management"
+                >
+                  <FaUsers />
+                  <span>Players</span>
+                </button>
+                <button
+                  className="btn-admin-action"
+                  onClick={() =>
+                    navigator.clipboard.writeText(gameState.roomCode)
+                  }
+                  title="Copy Room Code"
+                >
+                  <FaCopy />
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Main Action Section */}
+            <div className="main-action-section">
+              <button
+                onClick={onStartQuiz}
+                className="btn-start-quiz"
+                disabled={gameState.players.length < 1}
+              >
+                <FaPlay /> Start Quiz
+              </button>
+              <p className="start-hint">
+                {gameState.players.length < 1
+                  ? 'Wait for players to join...'
+                  : `Ready to start with ${gameState.players.length} player${
+                      gameState.players.length === 1 ? '' : 's'
+                    }!`}
+              </p>
+            </div>
+
+            {/* Secondary Actions */}
+            <div className="secondary-actions">
+              <button
+                onClick={onResetGame}
+                className="btn-secondary"
+                title="Reset Game"
+              >
+                <FaRedo />
+                <span>Reset</span>
+              </button>
+              <button
+                onClick={onToggleRoomLock}
+                className={`btn-secondary ${
+                  roomSettings.roomLocked ? 'active' : ''
+                }`}
+                title={roomSettings.roomLocked ? 'Unlock Room' : 'Lock Room'}
+              >
+                {roomSettings.roomLocked ? <FaLock /> : <FaUnlock />}
+                <span>{roomSettings.roomLocked ? 'Unlock' : 'Lock'}</span>
+              </button>
+            </div>
+
+            {/* Game Settings Panel */}
+            {showSettings && (
+              <div className="admin-panel settings-panel">
+                <div className="panel-header">
+                  <h4>Game Settings</h4>
+                  <button
+                    className="btn-close"
+                    onClick={() => setShowSettings(false)}
+                    title="Close Settings"
+                    aria-label="Close Settings"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+                <div className="settings-grid">
+                  <div className="setting-item">
+                    <label>Max Players</label>
+                    <input
+                      type="number"
+                      min="2"
+                      max="50"
+                      value={roomSettings.maxPlayers}
+                      onChange={e =>
+                        setRoomSettings({
+                          ...roomSettings,
+                          maxPlayers: parseInt(e.target.value),
+                        })
+                      }
+                      aria-label="Maximum number of players"
+                    />
+                  </div>
+                  <div className="setting-item">
+                    <label>Time per Question (seconds)</label>
+                    <input
+                      type="number"
+                      min="5"
+                      max="300"
+                      value={roomSettings.timePerQuestion}
+                      onChange={e =>
+                        setRoomSettings({
+                          ...roomSettings,
+                          timePerQuestion: parseInt(e.target.value),
+                        })
+                      }
+                      aria-label="Time per question in seconds"
+                    />
+                  </div>
+                  <div className="setting-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={roomSettings.allowSpectators}
+                        onChange={e =>
+                          setRoomSettings({
+                            ...roomSettings,
+                            allowSpectators: e.target.checked,
+                          })
+                        }
+                      />
+                      Allow Spectators
+                    </label>
+                  </div>
+                  <div className="setting-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={roomSettings.showLeaderboard}
+                        onChange={e =>
+                          setRoomSettings({
+                            ...roomSettings,
+                            showLeaderboard: e.target.checked,
+                          })
+                        }
+                      />
+                      Show Leaderboard
+                    </label>
+                  </div>
+                  <div className="setting-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={roomSettings.allowLateJoin}
+                        onChange={e =>
+                          setRoomSettings({
+                            ...roomSettings,
+                            allowLateJoin: e.target.checked,
+                          })
+                        }
+                      />
+                      Allow Late Join
+                    </label>
+                  </div>
+                </div>
+                <div className="panel-actions">
+                  <button
+                    className="btn-save"
+                    onClick={() => {
+                      onUpdateSettings?.(roomSettings);
+                      setShowSettings(false);
+                    }}
+                  >
+                    <FaSave /> Save Settings
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Player Management Panel */}
+            {showPlayerManagement && (
+              <div className="admin-panel player-panel">
+                <div className="panel-header">
+                  <h4>Player Management</h4>
+                  <button
+                    className="btn-close"
+                    onClick={() => setShowPlayerManagement(false)}
+                    title="Close Player Management"
+                    aria-label="Close Player Management"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+                <div className="player-list-admin">
+                  {gameState.players.map(player => (
+                    <div key={player.id} className="player-item-admin">
+                      <div className="player-info">
+                        <div className="player-avatar">
+                          {getPlayerIcon(player)}
+                        </div>
+                        <div className="player-details">
+                          <span className="player-name">
+                            {player.name}
+                            {player.isAdmin && (
+                              <FaCrown className="admin-crown" />
+                            )}
+                          </span>
+                          <span className="player-role">
+                            {player.isAdmin ? 'Host' : 'Player'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="player-actions">
+                        {!player.isAdmin && (
+                          <>
+                            <button
+                              className="btn-player-action"
+                              onClick={() => onToggleMute?.(player.id)}
+                              title="Toggle Mute"
+                            >
+                              <FaVolumeUp />
+                            </button>
+                            <button
+                              className="btn-player-action danger"
+                              onClick={() => onKickPlayer?.(player.id)}
+                              title="Kick Player"
+                            >
+                              <FaUserMinus />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="player-stats">
+                  <div className="stat-item">
+                    <span className="stat-label">Total Players:</span>
+                    <span className="stat-value">
+                      {gameState.players.length}
+                    </span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Admins:</span>
+                    <span className="stat-value">
+                      {gameState.players.filter(p => p.isAdmin).length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -114,6 +429,14 @@ function GameLobby({
           friends to invite them!
         </p>
       </div>
+
+      {/* Icon Picker Modal */}
+      <IconPicker
+        isOpen={showIconPicker}
+        onClose={() => setShowIconPicker(false)}
+        onSelect={handleIconSelect}
+        currentIcon={currentPlayer?.iconName}
+      />
     </div>
   );
 }
