@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FaUsers, FaCrown, FaCode, FaPlus, FaTrash } from 'react-icons/fa';
 import { usePermissions } from '../hooks/usePermissions';
+import { userAuthService } from '../services/userAuth';
+import { config } from '../config';
 
 interface UserWithRoles {
   id: string;
@@ -30,6 +32,7 @@ const RoleManagement: React.FC = () => {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
 
@@ -42,15 +45,32 @@ const RoleManagement: React.FC = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users-with-roles', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      setError(null);
+      const token = userAuthService.getToken();
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      const response = await fetch(
+        `${config.API_URL}/api/admin/users-with-roles`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch users');
+      }
+
       const data = await response.json();
       setUsers(data);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -58,11 +78,23 @@ const RoleManagement: React.FC = () => {
 
   const fetchRoles = async () => {
     try {
-      const response = await fetch('/api/admin/roles', {
+      const token = userAuthService.getToken();
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      const response = await fetch(`${config.API_URL}/api/admin/roles`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch roles');
+      }
+
       const data = await response.json();
       setRoles(data);
     } catch (error) {
@@ -72,19 +104,27 @@ const RoleManagement: React.FC = () => {
 
   const assignRole = async (userId: string, roleName: string) => {
     try {
-      const response = await fetch('/api/admin/assign-role', {
+      const token = userAuthService.getToken();
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      const response = await fetch(`${config.API_URL}/api/admin/assign-role`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ userId, roleName }),
       });
 
-      if (response.ok) {
-        fetchUsers();
-        setShowAssignModal(false);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to assign role');
       }
+
+      fetchUsers();
+      setShowAssignModal(false);
     } catch (error) {
       console.error('Error assigning role:', error);
     }
@@ -92,18 +132,26 @@ const RoleManagement: React.FC = () => {
 
   const removeRole = async (userId: string, roleName: string) => {
     try {
-      const response = await fetch('/api/admin/remove-role', {
+      const token = userAuthService.getToken();
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      const response = await fetch(`${config.API_URL}/api/admin/remove-role`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ userId, roleName }),
       });
 
-      if (response.ok) {
-        fetchUsers();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove role');
       }
+
+      fetchUsers();
     } catch (error) {
       console.error('Error removing role:', error);
     }
@@ -114,7 +162,22 @@ const RoleManagement: React.FC = () => {
   }
 
   if (loading) {
-    return <div>Loading role management...</div>;
+    return (
+      <div className="role-management">
+        <div className="loading">Loading role management...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="role-management">
+        <div className="error">Error: {error}</div>
+        <button onClick={() => fetchUsers()} className="btn-retry">
+          Retry
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -218,6 +281,37 @@ const RoleManagement: React.FC = () => {
           </div>
         </div>
       )}
+
+      <style>{`
+        .role-management .loading,
+        .role-management .error {
+          text-align: center;
+          padding: 2rem;
+          font-size: 1.1rem;
+        }
+
+        .role-management .error {
+          color: #dc2626;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          border-radius: 8px;
+          margin: 1rem 0;
+        }
+
+        .role-management .btn-retry {
+          background: #3b82f6;
+          color: white;
+          border: none;
+          padding: 0.5rem 1rem;
+          border-radius: 6px;
+          cursor: pointer;
+          margin-top: 1rem;
+        }
+
+        .role-management .btn-retry:hover {
+          background: #2563eb;
+        }
+      `}</style>
     </div>
   );
 };
