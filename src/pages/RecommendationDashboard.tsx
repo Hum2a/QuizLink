@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  FaRefresh,
+  FaRedo,
   FaFilter,
   FaChartBar,
   FaUsers,
@@ -173,7 +173,7 @@ const RecommendationDashboard: React.FC = () => {
           onClick={handleRefresh}
           disabled={loading}
         >
-          <FaRefresh className={loading ? 'spinning' : ''} />
+          <FaRedo className={loading ? 'spinning' : ''} />
           Refresh
         </button>
       </div>

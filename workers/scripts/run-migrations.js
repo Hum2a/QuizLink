@@ -25,11 +25,14 @@ async function runMigrations() {
       .filter(file => file.endsWith('.sql'))
       .sort();
 
-    console.log(`Found ${migrationFiles.length} migration files:`, migrationFiles);
+    console.log(
+      `Found ${migrationFiles.length} migration files:`,
+      migrationFiles
+    );
 
     for (const migrationFile of migrationFiles) {
       console.log(`Running migration: ${migrationFile}`);
-      
+
       const migrationPath = join(migrationsDir, migrationFile);
       const migrationSQL = readFileSync(migrationPath, 'utf8');
 
@@ -91,7 +94,11 @@ async function runMigrations() {
       for (let i = 0; i < statements.length; i++) {
         const statement = statements[i];
         if (statement) {
-          console.log(`Executing statement ${i + 1}/${statements.length}: ${statement.substring(0, 50)}...`);
+          console.log(
+            `Executing statement ${i + 1}/${
+              statements.length
+            }: ${statement.substring(0, 50)}...`
+          );
           try {
             await sql.query(statement);
           } catch (error) {
@@ -113,7 +120,6 @@ async function runMigrations() {
     const rolePermissions = new RolePermissions(databaseUrl);
     await rolePermissions.initializeRolesAndPermissions();
     console.log('✅ Roles and permissions initialized!');
-
   } catch (error) {
     console.error('Migration failed:', error);
     process.exit(1);

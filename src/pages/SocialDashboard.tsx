@@ -8,7 +8,7 @@ import {
   FaUserPlus,
   FaSearch,
   FaFilter,
-  FaRefresh,
+  FaRedo,
 } from 'react-icons/fa';
 import { useSocial } from '../contexts/SocialContext';
 import {
@@ -17,7 +17,10 @@ import {
   FriendCard,
 } from '../components/SocialComponents';
 import LoadingSpinner from '../components/LoadingSpinner';
-import type { FriendRequest, QuizChallenge } from '../services/databaseSocialService';
+import type {
+  FriendRequest,
+  QuizChallenge,
+} from '../services/databaseSocialService';
 
 const SocialDashboard: React.FC = () => {
   const {
@@ -215,7 +218,7 @@ const SocialDashboard: React.FC = () => {
             <div className="section-header">
               <h2>Recent Activity</h2>
               <button className="refresh-btn" onClick={refreshSocialFeed}>
-                <FaRefresh />
+                <FaRedo />
               </button>
             </div>
 

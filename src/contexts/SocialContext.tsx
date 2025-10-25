@@ -20,7 +20,7 @@ import {
   type QuizChallenge,
   type SocialStats,
 } from '../services/databaseSocialService';
-import { userAuthService } from './userAuth';
+import { userAuthService } from '../services/userAuth';
 
 interface SocialContextType {
   // Friends

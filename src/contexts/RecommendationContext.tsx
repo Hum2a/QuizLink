@@ -15,7 +15,7 @@ import {
   type UserPreference,
   type PlayHistoryEntry,
 } from '../services/recommendationEngine';
-import { userAuthService } from './userAuth';
+import { userAuthService } from '../services/userAuth';
 
 interface RecommendationContextType {
   recommendations: Recommendation[];
