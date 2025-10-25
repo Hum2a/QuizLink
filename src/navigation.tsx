@@ -1,4 +1,3 @@
-import { RouteObject } from 'react-router-dom';
 import GameFlow from './GameFlow';
 import QuizLibrary from './pages/QuizLibrary';
 import QuizEditor from './pages/QuizEditor';
@@ -18,7 +17,7 @@ import JoinGame from './pages/JoinGame';
 import DeveloperDashboard from './pages/DeveloperDashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
-export interface NavigationRoute extends RouteObject {
+export interface AppRoute {
   path: string;
   element: React.ReactElement;
   title?: string;
@@ -28,7 +27,7 @@ export interface NavigationRoute extends RouteObject {
   isPublic?: boolean;
 }
 
-export const navigationRoutes: NavigationRoute[] = [
+export const navigationRoutes: AppRoute[] = [
   // Public authentication routes
   {
     path: '/login',
@@ -211,23 +210,23 @@ export const navigationRoutes: NavigationRoute[] = [
 ];
 
 // Helper functions for navigation
-export const getRouteByPath = (path: string): NavigationRoute | undefined => {
+export const getRouteByPath = (path: string): AppRoute | undefined => {
   return navigationRoutes.find(route => route.path === path);
 };
 
-export const getPublicRoutes = (): NavigationRoute[] => {
+export const getPublicRoutes = (): AppRoute[] => {
   return navigationRoutes.filter(route => route.isPublic);
 };
 
-export const getAuthRequiredRoutes = (): NavigationRoute[] => {
+export const getAuthRequiredRoutes = (): AppRoute[] => {
   return navigationRoutes.filter(route => route.requiresAuth);
 };
 
-export const getAdminRoutes = (): NavigationRoute[] => {
+export const getAdminRoutes = (): AppRoute[] => {
   return navigationRoutes.filter(route => route.requiredRole);
 };
 
-export const getDeveloperRoutes = (): NavigationRoute[] => {
+export const getDeveloperRoutes = (): AppRoute[] => {
   return navigationRoutes.filter(route => route.requiredRole === 'developer');
 };
 
