@@ -3,7 +3,6 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import './App.css';
 import JoinScreen from './components/JoinScreen';
 import GameLobby from './components/GameLobby';
-import Lobby from './components/Lobby';
 import PlayerView from './components/PlayerView';
 import AdminView from './components/AdminView';
 import ResultsView from './components/ResultsView';

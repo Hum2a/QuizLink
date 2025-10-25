@@ -17,7 +17,6 @@ function GameLobby({
   onLogout,
 }: GameLobbyProps) {
   const currentPlayer = gameState.players.find(p => p.id === playerId);
-  const otherPlayers = gameState.players.filter(p => p.id !== playerId);
 
   return (
     <div className="game-lobby">
