@@ -15,7 +15,7 @@ import {
   FaEdit,
   FaPowerOff,
 } from 'react-icons/fa';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { GameState } from '../types';
 import IconPicker from './IconPicker';
 import IconRenderer from './IconRenderer';
@@ -57,6 +57,7 @@ function GameLobby({
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [recentActivity, setRecentActivity] = useState<string[]>([]);
   const [roomSettings, setRoomSettings] = useState({
     maxPlayers: 10,
     timePerQuestion: 30,
@@ -81,10 +82,22 @@ function GameLobby({
   };
 
   const getPlayerIcon = (player: { iconName?: string } | undefined) => {
-    console.log('getPlayerIcon called with player:', player);
-    console.log('Player iconName:', player?.iconName);
     return <IconRenderer iconName={player?.iconName} size={24} />;
   };
+
+  // Track player count changes for activity feed
+  useEffect(() => {
+    const currentCount = gameState.players.length;
+    const previousCount =
+      recentActivity.length > 0
+        ? parseInt(recentActivity[recentActivity.length - 1].split(' ')[0]) || 0
+        : 0;
+
+    if (previousCount > 0 && currentCount !== previousCount) {
+      const activityMessage = `${currentCount} players in lobby`;
+      setRecentActivity(prev => [...prev.slice(-2), activityMessage]);
+    }
+  }, [gameState.players.length]);
 
   return (
     <div className="game-lobby">
@@ -165,6 +178,23 @@ function GameLobby({
             ))}
           </div>
         </div>
+
+        {/* Activity Feed */}
+        {recentActivity.length > 0 && (
+          <div className="activity-feed">
+            <h3>Recent Activity</h3>
+            <div className="activity-list">
+              {recentActivity.map((activity, index) => (
+                <div key={index} className="activity-item">
+                  <span className="activity-time">
+                    {new Date().toLocaleTimeString()}
+                  </span>
+                  <span className="activity-message">{activity}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {isAdmin && (
           <div className="admin-controls">

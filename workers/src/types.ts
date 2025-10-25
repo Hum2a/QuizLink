@@ -44,6 +44,7 @@ export interface WebSocketMessage {
     | 'update-player-icon'
     | 'close-game'
     | 'leave-game'
+    | 'player-joined'
     | 'player-left'
     | 'game-closed'
     | 'game-state-update'

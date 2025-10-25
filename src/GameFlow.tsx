@@ -77,8 +77,20 @@ function GameFlow() {
 
       client.on('game-state-update', (state: GameState) => {
         console.log('Received game-state-update:', state);
-        addLogEntry('Received game state update');
+        addLogEntry('Lobby updated');
         setGameState(state);
+      });
+
+      client.on('player-joined', ({ playerName, gameState }) => {
+        console.log('Player joined:', playerName);
+        addLogEntry(`${playerName} joined the game`);
+        setGameState(gameState);
+      });
+
+      client.on('player-left', ({ message, playerName, gameState }) => {
+        console.log('Player left:', message);
+        addLogEntry(`${playerName} left the game`);
+        setGameState(gameState);
       });
 
       client.on('join-success', ({ playerId, isAdmin }) => {

@@ -276,6 +276,20 @@ export class GameRoom extends DurableObject {
       payload: { playerId, isAdmin },
     });
 
+    // Broadcast player joined event to all players (except the joining player)
+    const otherSockets = this.state
+      .getWebSockets()
+      .filter(s => s !== webSocket);
+    otherSockets.forEach(socket => {
+      this.send(socket, {
+        type: 'player-joined',
+        payload: {
+          playerName: name,
+          gameState: this.getPublicGameState(),
+        },
+      });
+    });
+
     // Broadcast updated state to all
     console.log('Broadcasting game state update');
     this.broadcast({

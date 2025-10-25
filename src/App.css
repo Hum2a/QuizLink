@@ -1915,6 +1915,55 @@ body {
   box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
 }
 
+/* Activity Feed */
+.activity-feed {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e9ecef;
+}
+
+.activity-feed h3 {
+  margin: 0 0 15px 0;
+  color: #495057;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
+}
+
+.activity-time {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.activity-message {
+  font-size: 0.9rem;
+  color: #495057;
+  font-weight: 500;
+}
+
 /* User Avatar Styles */
 .user-avatar-container {
   position: relative;

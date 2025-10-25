@@ -1,26 +1,71 @@
 import React from 'react';
-import * as FaIcons from 'react-icons/fa';
-import * as MdIcons from 'react-icons/md';
-import * as IoIcons from 'react-icons/io5';
-import * as HiIcons from 'react-icons/hi2';
-import * as BiIcons from 'react-icons/bi';
-import * as AiIcons from 'react-icons/ai';
-import * as BsIcons from 'react-icons/bs';
-import * as TbIcons from 'react-icons/tb';
-import * as VscIcons from 'react-icons/vsc';
-import { FaUser } from 'react-icons/fa';
+import {
+  FaUser,
+  FaUsers,
+  FaCrown,
+  FaPlay,
+  FaStop,
+  FaPause,
+  FaVolumeUp,
+  FaVolumeMute,
+  FaLock,
+  FaUnlock,
+  FaSave,
+  FaTimes,
+  FaEdit,
+  FaPowerOff,
+  FaSignOutAlt,
+  FaCog,
+  FaUserMinus,
+  FaCopy,
+  FaRedo,
+  FaHeart,
+  FaStar,
+  FaSmile,
+  FaGamepad,
+  FaTrophy,
+  FaRocket,
+  FaMagic,
+  FaFire,
+  FaSun,
+  FaMoon,
+} from 'react-icons/fa';
 
-// Combine all icon libraries
-const allIcons = {
-  ...FaIcons,
-  ...MdIcons,
-  ...IoIcons,
-  ...HiIcons,
-  ...BiIcons,
-  ...AiIcons,
-  ...BsIcons,
-  ...TbIcons,
-  ...VscIcons,
+// Define a limited set of commonly used icons to reduce bundle size
+const iconMap: Record<
+  string,
+  React.ComponentType<{ className?: string; size?: number }>
+> = {
+  // FontAwesome icons
+  FaUser: FaUser,
+  FaUsers: FaUsers,
+  FaCrown: FaCrown,
+  FaPlay: FaPlay,
+  FaStop: FaStop,
+  FaPause: FaPause,
+  FaVolumeUp: FaVolumeUp,
+  FaVolumeMute: FaVolumeMute,
+  FaLock: FaLock,
+  FaUnlock: FaUnlock,
+  FaSave: FaSave,
+  FaTimes: FaTimes,
+  FaEdit: FaEdit,
+  FaPowerOff: FaPowerOff,
+  FaSignOutAlt: FaSignOutAlt,
+  FaCog: FaCog,
+  FaUserMinus: FaUserMinus,
+  FaCopy: FaCopy,
+  FaRedo: FaRedo,
+  FaHeart: FaHeart,
+  FaStar: FaStar,
+  FaSmile: FaSmile,
+  FaGamepad: FaGamepad,
+  FaTrophy: FaTrophy,
+  FaRocket: FaRocket,
+  FaMagic: FaMagic,
+  FaFire: FaFire,
+  FaSun: FaSun,
+  FaMoon: FaMoon,
 };
 
 interface IconRendererProps {
@@ -36,23 +81,16 @@ const IconRenderer: React.FC<IconRendererProps> = ({
   className,
   size = 24,
 }) => {
-  console.log('IconRenderer called with iconName:', iconName);
-
   if (!iconName) {
-    console.log('No iconName provided, using fallback');
     return <Fallback className={className} size={size} />;
   }
 
-  const IconComponent = allIcons[
-    iconName as keyof typeof allIcons
-  ] as React.ComponentType<{ className?: string; size?: number }>;
+  const IconComponent = iconMap[iconName];
 
   if (!IconComponent) {
-    console.log('IconComponent not found for:', iconName);
     return <Fallback className={className} size={size} />;
   }
 
-  console.log('Rendering icon:', iconName);
   return <IconComponent className={className} size={size} />;
 };
 
