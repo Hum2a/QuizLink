@@ -16,6 +16,9 @@ import CreateGame from './pages/CreateGame';
 import JoinGame from './pages/JoinGame';
 import DeveloperDashboard from './pages/DeveloperDashboard';
 import AchievementDashboard from './pages/AchievementDashboard';
+import MobileGameFlow from './components/MobileGameFlow';
+import MobileQuizBrowser from './components/MobileQuizBrowser';
+import MobileGesturesDemo from './pages/MobileGesturesDemo';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 export interface AppRoute {
@@ -73,6 +76,29 @@ export const navigationRoutes: AppRoute[] = [
     title: 'Achievements',
     description: 'Track your achievements and progress',
     requiresAuth: true,
+  },
+  {
+    path: '/mobile/browse',
+    element: <MobileQuizBrowser quizzes={[]} />,
+    title: 'Mobile Quiz Browser',
+    description: 'Mobile-optimized quiz browser with gestures',
+    requiresAuth: true,
+  },
+  {
+    path: '/mobile/play/:quizId',
+    element: (
+      <MobileGameFlow quiz={{} as any} questions={[]} onComplete={() => {}} />
+    ),
+    title: 'Mobile Quiz Play',
+    description: 'Mobile-optimized quiz playing experience',
+    requiresAuth: true,
+  },
+  {
+    path: '/mobile/demo',
+    element: <MobileGesturesDemo />,
+    title: 'Mobile Gestures Demo',
+    description: 'Demo of mobile gesture features',
+    requiresAuth: false,
   },
   {
     path: '/profile',
