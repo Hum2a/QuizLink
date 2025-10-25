@@ -68,14 +68,7 @@ function GameLobby({
   });
 
   const handleIconSelect = (iconName: string) => {
-    console.log('Icon selected:', iconName);
-    console.log('Current player:', currentPlayer);
     if (onUpdatePlayerIcon && currentPlayer) {
-      console.log(
-        'Calling onUpdatePlayerIcon with:',
-        currentPlayer.id,
-        iconName
-      );
       onUpdatePlayerIcon(currentPlayer.id, iconName);
     }
     setShowIconPicker(false);

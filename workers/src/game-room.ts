@@ -537,12 +537,18 @@ export class GameRoom extends DurableObject {
       return;
     }
 
-    // Check if the requester is an admin
-    const requesterSocketId = this.getSocketId(webSocket);
-    const requester = this.gameState.players.find(
-      p => p.socketId === requesterSocketId
-    );
+    // Get the player ID from the sessions Map
+    const playerId = this.sessions.get(webSocket);
+    if (!playerId) {
+      this.send(webSocket, {
+        type: 'error',
+        payload: { message: 'Player not found in session' },
+      });
+      return;
+    }
 
+    // Find the player in the game state
+    const requester = this.gameState.players.find(p => p.id === playerId);
     if (!requester || !requester.isAdmin) {
       this.send(webSocket, {
         type: 'error',
