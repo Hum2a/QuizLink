@@ -121,11 +121,16 @@ export class GameRoom extends DurableObject {
     webSocket.addEventListener('message', async msg => {
       try {
         console.log('Received raw message:', msg.data);
+        console.log('Message type:', typeof msg.data);
+        console.log('Message data:', msg.data);
         const data: WebSocketMessage = JSON.parse(msg.data as string);
         console.log('Parsed message:', data);
+        console.log('Message type:', data.type);
+        console.log('Message payload:', data.payload);
         await this.handleMessage(webSocket, data);
       } catch (error) {
         console.error('Error handling message:', error);
+        console.error('Raw message that caused error:', msg.data);
         this.send(webSocket, {
           type: 'error',
           payload: { message: 'Invalid message format' },
@@ -442,9 +447,15 @@ export class GameRoom extends DurableObject {
 
   send(socket: WebSocket, message: WebSocketMessage) {
     try {
-      socket.send(JSON.stringify(message));
+      console.log('Sending message to client:', message);
+      console.log('WebSocket readyState:', socket.readyState);
+      const messageStr = JSON.stringify(message);
+      console.log('Serialized message:', messageStr);
+      socket.send(messageStr);
+      console.log('Message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
+      console.error('Message that failed to send:', message);
     }
   }
 
