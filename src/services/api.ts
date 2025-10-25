@@ -1,5 +1,5 @@
 import { config } from '../config';
-import { authService } from './auth';
+import { userAuthService } from './userAuth';
 
 export interface QuizTemplate {
   id: string;
@@ -42,10 +42,20 @@ class QuizAPI {
     this.baseURL = `${config.API_URL}/api/admin`;
   }
 
+  private getAuthHeaders(): HeadersInit {
+    const token = userAuthService.getToken();
+    if (!token) throw new Error('No authentication token');
+
+    return {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+  }
+
   // Quiz Templates
   async getAllQuizzes(): Promise<QuizTemplate[]> {
     const response = await fetch(`${this.baseURL}/quizzes`, {
-      headers: authService.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch quizzes');
     return response.json();
@@ -53,17 +63,22 @@ class QuizAPI {
 
   async getQuiz(id: string): Promise<QuizTemplate> {
     const response = await fetch(`${this.baseURL}/quizzes/${id}`, {
-      headers: authService.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch quiz');
     return response.json();
   }
 
-  async createQuiz(quiz: Omit<QuizTemplate, 'id' | 'created_at' | 'updated_at' | 'times_played'>): Promise<{ id: string }> {
+  async createQuiz(
+    quiz: Omit<
+      QuizTemplate,
+      'id' | 'created_at' | 'updated_at' | 'times_played'
+    >
+  ): Promise<{ id: string }> {
     const response = await fetch(`${this.baseURL}/quizzes`, {
       method: 'POST',
-      headers: authService.getAuthHeaders(),
-      body: JSON.stringify(quiz)
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(quiz),
     });
     if (!response.ok) throw new Error('Failed to create quiz');
     return response.json();
@@ -72,8 +87,8 @@ class QuizAPI {
   async updateQuiz(id: string, quiz: Partial<QuizTemplate>): Promise<void> {
     const response = await fetch(`${this.baseURL}/quizzes/${id}`, {
       method: 'PUT',
-      headers: authService.getAuthHeaders(),
-      body: JSON.stringify(quiz)
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(quiz),
     });
     if (!response.ok) throw new Error('Failed to update quiz');
   }
@@ -81,26 +96,35 @@ class QuizAPI {
   async deleteQuiz(id: string): Promise<void> {
     const response = await fetch(`${this.baseURL}/quizzes/${id}`, {
       method: 'DELETE',
-      headers: authService.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to delete quiz');
   }
 
   // Questions
   async getQuestions(quizId: string): Promise<Question[]> {
-    const response = await fetch(`${this.baseURL}/quizzes/${quizId}/questions`, {
-      headers: authService.getAuthHeaders()
-    });
+    const response = await fetch(
+      `${this.baseURL}/quizzes/${quizId}/questions`,
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
     if (!response.ok) throw new Error('Failed to fetch questions');
     return response.json();
   }
 
-  async addQuestion(quizId: string, question: Omit<Question, 'id' | 'quiz_template_id'>): Promise<{ id: string }> {
-    const response = await fetch(`${this.baseURL}/quizzes/${quizId}/questions`, {
-      method: 'POST',
-      headers: authService.getAuthHeaders(),
-      body: JSON.stringify(question)
-    });
+  async addQuestion(
+    quizId: string,
+    question: Omit<Question, 'id' | 'quiz_template_id'>
+  ): Promise<{ id: string }> {
+    const response = await fetch(
+      `${this.baseURL}/quizzes/${quizId}/questions`,
+      {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(question),
+      }
+    );
     if (!response.ok) throw new Error('Failed to add question');
     return response.json();
   }
@@ -108,8 +132,8 @@ class QuizAPI {
   async updateQuestion(id: string, question: Partial<Question>): Promise<void> {
     const response = await fetch(`${this.baseURL}/questions/${id}`, {
       method: 'PUT',
-      headers: authService.getAuthHeaders(),
-      body: JSON.stringify(question)
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(question),
     });
     if (!response.ok) throw new Error('Failed to update question');
   }
@@ -117,7 +141,7 @@ class QuizAPI {
   async deleteQuestion(id: string): Promise<void> {
     const response = await fetch(`${this.baseURL}/questions/${id}`, {
       method: 'DELETE',
-      headers: authService.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to delete question');
   }
@@ -125,17 +149,20 @@ class QuizAPI {
   async reorderQuestions(quizId: string, questionIds: string[]): Promise<void> {
     const response = await fetch(`${this.baseURL}/quizzes/${quizId}/reorder`, {
       method: 'POST',
-      headers: authService.getAuthHeaders(),
-      body: JSON.stringify({ questionIds })
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ questionIds }),
     });
     if (!response.ok) throw new Error('Failed to reorder questions');
   }
 
   // Analytics
   async getAnalytics(quizId: string): Promise<Analytics> {
-    const response = await fetch(`${this.baseURL}/quizzes/${quizId}/analytics`, {
-      headers: authService.getAuthHeaders()
-    });
+    const response = await fetch(
+      `${this.baseURL}/quizzes/${quizId}/analytics`,
+      {
+        headers: this.getAuthHeaders(),
+      }
+    );
     if (!response.ok) throw new Error('Failed to fetch analytics');
     return response.json();
   }
@@ -143,7 +170,7 @@ class QuizAPI {
   // Categories
   async getCategories(): Promise<string[]> {
     const response = await fetch(`${this.baseURL}/categories`, {
-      headers: authService.getAuthHeaders()
+      headers: this.getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch categories');
     return response.json();
@@ -151,4 +178,3 @@ class QuizAPI {
 }
 
 export const quizAPI = new QuizAPI();
-
