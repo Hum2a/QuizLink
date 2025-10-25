@@ -25,50 +25,50 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       </div>
 
       <style>{`
-        .loading-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 200px;
-          padding: 2rem;
-        }
+          .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+            padding: 2rem;
+          }
 
-        .loading-spinner {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 1rem;
-        }
+          .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+          }
 
-        .spinner {
-          border: 3px solid #e5e7eb;
-          border-top: 3px solid #3b82f6;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
+          .spinner {
+            border: 3px solid var(--color-border);
+            border-top: 3px solid var(--color-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
 
-        .loading-message {
-          color: #6b7280;
-          font-size: 0.875rem;
-          text-align: center;
-          margin: 0;
-        }
+          .loading-message {
+            color: var(--color-text-secondary);
+            font-size: 0.875rem;
+            text-align: center;
+            margin: 0;
+          }
 
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
 
-        .loading-container.small {
-          min-height: 100px;
-          padding: 1rem;
-        }
+          .loading-container.small {
+            min-height: 100px;
+            padding: 1rem;
+          }
 
-        .loading-container.large {
-          min-height: 300px;
-          padding: 3rem;
-        }
-      `}</style>
+          .loading-container.large {
+            min-height: 300px;
+            padding: 3rem;
+          }
+        `}</style>
     </div>
   );
 };
