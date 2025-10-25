@@ -22,28 +22,35 @@ export class WebSocketClient {
       try {
         const url = `${this.wsUrl}/game/${this.roomCode}`;
         console.log('Connecting to:', url);
-        
+
         this.ws = new WebSocket(url);
 
         this.ws.onopen = () => {
-          console.log('WebSocket connected');
+          console.log('WebSocket connected, readyState:', this.ws?.readyState);
           this.reconnectAttempts = 0;
           resolve();
         };
 
-        this.ws.onmessage = (event) => {
+        this.ws.onmessage = event => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
+            console.log('Received WebSocket message:', message);
             const handler = this.messageHandlers.get(message.type);
             if (handler) {
               handler(message.payload);
+            } else {
+              // Try catch-all handler
+              const catchAllHandler = this.messageHandlers.get('*');
+              if (catchAllHandler) {
+                catchAllHandler(message);
+              }
             }
           } catch (error) {
             console.error('Error parsing message:', error);
           }
         };
 
-        this.ws.onerror = (error) => {
+        this.ws.onerror = error => {
           console.error('WebSocket error:', error);
           reject(error);
         };
@@ -63,14 +70,24 @@ export class WebSocketClient {
   }
 
   emit(eventType: string, payload?: any) {
+    console.log(
+      'Emitting event:',
+      eventType,
+      'WebSocket state:',
+      this.ws?.readyState
+    );
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       const message: WebSocketMessage = {
         type: eventType,
-        payload
+        payload,
       };
+      console.log('Sending message:', message);
       this.ws.send(JSON.stringify(message));
     } else {
-      console.error('WebSocket not connected');
+      console.error(
+        'WebSocket not connected, readyState:',
+        this.ws?.readyState
+      );
     }
   }
 
@@ -78,7 +95,7 @@ export class WebSocketClient {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       console.log(`Reconnecting... Attempt ${this.reconnectAttempts}`);
-      
+
       setTimeout(() => {
         this.connect().catch(error => {
           console.error('Reconnection failed:', error);
@@ -97,7 +114,16 @@ export class WebSocketClient {
   }
 
   isConnected(): boolean {
-    return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+    const connected = this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+    console.log('isConnected check:', {
+      ws: !!this.ws,
+      readyState: this.ws?.readyState,
+      connected,
+    });
+    return connected;
+  }
+
+  getReadyState(): number | undefined {
+    return this.ws?.readyState;
   }
 }
-

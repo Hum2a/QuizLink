@@ -2,23 +2,62 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaArrowLeft, FaGamepad } from 'react-icons/fa';
 import { userAuthService } from '../services/userAuth';
+import { config } from '../config';
 import '../styles/admin.css';
 
 function JoinGame() {
   const navigate = useNavigate();
   const [roomCode, setRoomCode] = useState('');
+  const [error, setError] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
   const user = userAuthService.getUser();
 
-  const handleJoin = (e: React.FormEvent) => {
+  const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
 
     if (!roomCode.trim()) {
-      alert('Please enter a room code');
+      setError('Please enter a room code');
       return;
     }
 
-    // Navigate to play page with room code
-    navigate(`/play?room=${roomCode.toUpperCase()}`);
+    if (roomCode.length < 4) {
+      setError('Room code must be at least 4 characters');
+      return;
+    }
+
+    try {
+      setIsJoining(true);
+
+      // Validate room exists first
+      const response = await fetch(
+        `${config.API_URL}/api/validate-room/${roomCode.toUpperCase()}`
+      );
+
+      if (response.status === 404) {
+        setError('Room not found. Please check the room code.');
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to validate room');
+      }
+
+      const roomData = await response.json();
+
+      if (!roomData.exists) {
+        setError('Room not found. Please check the room code.');
+        return;
+      }
+
+      // Navigate to play page with room code
+      navigate(`/play?room=${roomCode.toUpperCase()}`);
+    } catch (err) {
+      console.error('Join game error:', err);
+      setError('Failed to join game. Please try again.');
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   return (
@@ -54,13 +93,20 @@ function JoinGame() {
               <h2>Enter Room Code</h2>
               <p>Get the room code from the game host</p>
 
+              {error && (
+                <div className="error-message" style={{ marginBottom: '1rem' }}>
+                  {error}
+                </div>
+              )}
+
               <input
                 type="text"
                 value={roomCode}
                 onChange={e => setRoomCode(e.target.value.toUpperCase())}
-                placeholder="Enter 6-digit code"
+                placeholder="Enter room code"
                 maxLength={10}
                 autoFocus
+                disabled={isJoining}
                 style={{
                   textTransform: 'uppercase',
                   fontSize: '1.5rem',
@@ -70,8 +116,12 @@ function JoinGame() {
                 }}
               />
 
-              <button type="submit" className="btn-primary btn-large">
-                <FaGamepad /> Join Game
+              <button
+                type="submit"
+                className="btn-primary btn-large"
+                disabled={isJoining || !roomCode.trim()}
+              >
+                <FaGamepad /> {isJoining ? 'Joining...' : 'Join Game'}
               </button>
             </form>
 

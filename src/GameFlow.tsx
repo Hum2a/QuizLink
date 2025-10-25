@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import './App.css';
 import JoinScreen from './components/JoinScreen';
+import GameLobby from './components/GameLobby';
 import Lobby from './components/Lobby';
 import PlayerView from './components/PlayerView';
 import AdminView from './components/AdminView';
@@ -31,58 +32,70 @@ function GameFlow() {
   // Check if user is authenticated
   useEffect(() => {
     const checkAuth = async () => {
-      if (!userAuthService.isAuthenticated()) {
-        navigate('/register');
-        return;
-      }
-
-      // Verify token is still valid
+      // Try to get current user, but don't require authentication
       const user = await userAuthService.getCurrentUser();
-      if (!user) {
-        navigate('/register');
-      } else {
+      if (user) {
         setCurrentUser(user);
         setPlayerName(user.display_name);
+      } else {
+        // Allow guest joining
+        setCurrentUser(null);
+        setPlayerName('Guest');
+      }
 
-        // Auto-join if room code is in URL
-        if (urlRoomCode && !hasJoined) {
-          setTimeout(() => {
-            handleJoin(user.display_name, urlIsAdmin, urlRoomCode);
-          }, 500);
-        }
+      // Auto-join if room code is in URL
+      if (urlRoomCode && !hasJoined) {
+        const displayName = user?.display_name || 'Guest';
+        setTimeout(() => {
+          handleJoin(displayName, urlIsAdmin, urlRoomCode);
+        }, 500);
       }
     };
 
     checkAuth();
   }, [navigate]);
 
-  const connectToRoom = async (code: string) => {
+  const connectToRoom = async (code: string): Promise<WebSocketClient> => {
+    console.log('connectToRoom called with code:', code);
     setIsConnecting(true);
     setError('');
 
     try {
+      console.log('Creating WebSocket client with URL:', config.WS_URL);
       const client = new WebSocketClient(config.WS_URL, code);
 
       client.on('game-state-update', (state: GameState) => {
+        console.log('Received game-state-update:', state);
         setGameState(state);
       });
 
       client.on('join-success', ({ playerId, isAdmin }) => {
+        console.log('Join successful:', { playerId, isAdmin });
         setPlayerId(playerId);
         setIsAdmin(isAdmin);
         setHasJoined(true);
       });
 
       client.on('error', ({ message }) => {
+        console.error('WebSocket error:', message);
         setError(message);
       });
 
+      // Add a catch-all handler for debugging
+      client.on('*', message => {
+        console.log('Received unknown message:', message);
+      });
+
+      console.log('Attempting to connect...');
       await client.connect();
+      console.log('WebSocket connected successfully');
       setWsClient(client);
       setRoomCode(code);
+      return client;
     } catch (err) {
       console.error('Connection error:', err);
       setError('Failed to connect to game room. Please try again.');
+      throw err;
     } finally {
       setIsConnecting(false);
     }
@@ -101,25 +114,71 @@ function GameFlow() {
     asAdmin: boolean,
     roomCodeInput?: string
   ) => {
+    console.log('handleJoin called', {
+      name,
+      asAdmin,
+      roomCodeInput,
+      currentUser,
+    });
+
+    // Prevent multiple calls
+    if (isConnecting) {
+      console.log('Already connecting, ignoring duplicate call');
+      return;
+    }
+
     const code = roomCodeInput || roomCode;
     const displayName = name || currentUser?.display_name || 'Player';
     setPlayerName(displayName);
 
-    if (!wsClient) {
-      await connectToRoom(code);
-    }
+    console.log('Attempting to connect to room:', code);
+    let client: WebSocketClient;
 
-    // Wait a bit for connection to establish
-    setTimeout(() => {
-      if (wsClient && wsClient.isConnected()) {
+    if (!wsClient) {
+      client = await connectToRoom(code);
+    } else {
+      // If we already have a client, check if it's connected to the right room
+      console.log('Using existing WebSocket client');
+      if (wsClient.isConnected()) {
         wsClient.emit('join-game', {
           name: displayName,
           isAdmin: asAdmin,
           roomCode: code,
-          userId: currentUser?.id,
+          userId: currentUser?.id || null,
         });
+        return;
+      } else {
+        console.log('Existing client not connected, creating new connection');
+        client = await connectToRoom(code);
       }
-    }, 100);
+    }
+
+    // Wait a bit for connection to establish, then emit join event
+    setTimeout(() => {
+      console.log('WebSocket connection status:', client?.isConnected());
+      console.log('WebSocket readyState:', client?.getReadyState());
+      if (client && client.isConnected()) {
+        console.log('Emitting join-game event');
+        client.emit('join-game', {
+          name: displayName,
+          isAdmin: asAdmin,
+          roomCode: code,
+          userId: currentUser?.id || null,
+        });
+      } else {
+        console.error('WebSocket not connected, cannot join game');
+        // Try to emit anyway in case the connection is just slow
+        if (client) {
+          console.log('Attempting to emit despite connection check...');
+          client.emit('join-game', {
+            name: displayName,
+            isAdmin: asAdmin,
+            roomCode: code,
+            userId: currentUser?.id || null,
+          });
+        }
+      }
+    }, 500); // Increased timeout to 500ms
   };
 
   const handleLogout = () => {
@@ -181,7 +240,7 @@ function GameFlow() {
           onJoin={handleJoin}
           isConnecting={isConnecting}
           error={error}
-          defaultName={currentUser.display_name}
+          defaultName={currentUser?.display_name || 'Guest'}
         />
       </div>
     );
@@ -208,11 +267,12 @@ function GameFlow() {
   if (gameState.currentQuestion === -1) {
     return (
       <div className="app">
-        <Lobby
-          players={gameState.players}
+        <GameLobby
+          gameState={gameState}
+          playerId={playerId}
           isAdmin={isAdmin}
           onStartQuiz={handleStartQuiz}
-          roomCode={gameState.roomCode}
+          onLogout={handleLogout}
         />
       </div>
     );

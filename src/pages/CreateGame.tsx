@@ -110,16 +110,25 @@ function CreateGame() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create game room');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create game room');
       }
 
       const result = await response.json();
 
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create game room');
+      }
+
       // Navigate to play page with room code and as admin
-      navigate(`/play?room=${result.roomCode || code}&admin=true`);
+      navigate(`/play?room=${result.roomCode}&admin=true`);
     } catch (err) {
       console.error('Failed to create game:', err);
-      setError('Failed to create game. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to create game. Please try again.'
+      );
     } finally {
       setCreating(false);
     }

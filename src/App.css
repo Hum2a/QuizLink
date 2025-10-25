@@ -607,6 +607,259 @@ body {
   font-size: 0.9rem;
 }
 
+/* Game Lobby Styles */
+.game-lobby {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 800px;
+  width: 100%;
+  animation: slideIn 0.5s ease-out;
+}
+
+.lobby-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.room-info h1 {
+  color: #667eea;
+  margin-bottom: 10px;
+  font-size: 2.2rem;
+}
+
+.room-code {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8f9fa;
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: 2px solid #e9ecef;
+}
+
+.code-label {
+  font-weight: 600;
+  color: #666;
+}
+
+.code-value {
+  font-family: 'Courier New', monospace;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #667eea;
+  letter-spacing: 2px;
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.current-player {
+  text-align: right;
+}
+
+.player-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.admin-crown {
+  color: #ffd700;
+  font-size: 0.9rem;
+}
+
+.player-role {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.logout-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.3s;
+}
+
+.logout-btn:hover {
+  background: #c82333;
+}
+
+.lobby-content {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.players-section h2 {
+  color: #333;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: all 0.3s;
+}
+
+.player-card.current-player {
+  background: #e3f2fd;
+  border-color: #667eea;
+}
+
+.player-card.admin {
+  background: #fff3e0;
+  border-color: #ffd700;
+}
+
+.player-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #667eea;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.player-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-controls,
+.waiting-section {
+  background: #f8f9fa;
+  padding: 25px;
+  border-radius: 15px;
+  text-align: center;
+}
+
+.admin-controls h3,
+.waiting-section h3 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.btn-start-quiz {
+  background: linear-gradient(45deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 auto 15px;
+  transition: all 0.3s;
+}
+
+.btn-start-quiz:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+}
+
+.btn-start-quiz:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.start-hint {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.waiting-animation {
+  margin-top: 20px;
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.loading-dots span {
+  width: 8px;
+  height: 8px;
+  background: #667eea;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loading-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.loading-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+.lobby-footer {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.room-tip {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .app {
@@ -617,12 +870,24 @@ body {
   .lobby,
   .quiz-view,
   .admin-view,
-  .results-view {
+  .results-view,
+  .game-lobby {
     padding: 20px;
   }
 
   .join-screen h1 {
     font-size: 2rem;
+  }
+
+  .lobby-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .lobby-header {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
   }
 
   .admin-grid {
