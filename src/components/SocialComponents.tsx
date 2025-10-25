@@ -15,7 +15,7 @@ import {
   getActivityColor,
   type SocialActivity,
   type LeaderboardEntry,
-} from '../services/socialService';
+} from '../services/databaseSocialService';
 
 interface SocialActivityCardProps {
   activity: SocialActivity;

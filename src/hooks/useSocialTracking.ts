@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useSocial } from '../contexts/SocialContext';
-import type { SocialActivityType } from '../services/socialService';
+import type { SocialActivityType } from '../services/databaseSocialService';
 
 export const useSocialTracking = () => {
   const { addSocialActivity, updateSocialStats } = useSocial();

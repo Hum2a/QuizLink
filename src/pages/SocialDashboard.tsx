@@ -17,7 +17,7 @@ import {
   FriendCard,
 } from '../components/SocialComponents';
 import LoadingSpinner from '../components/LoadingSpinner';
-import type { FriendRequest, QuizChallenge } from '../services/socialService';
+import type { FriendRequest, QuizChallenge } from '../services/databaseSocialService';
 
 const SocialDashboard: React.FC = () => {
   const {

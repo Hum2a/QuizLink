@@ -19,7 +19,7 @@ import {
   type SocialNotification,
   type QuizChallenge,
   type SocialStats,
-} from '../services/socialService';
+} from '../services/databaseSocialService';
 import { userAuthService } from './userAuth';
 
 interface SocialContextType {

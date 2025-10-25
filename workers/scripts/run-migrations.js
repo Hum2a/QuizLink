@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless';
-import { readFileSync } from 'fs';
+import { readFileSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -19,99 +19,103 @@ async function runMigrations() {
   try {
     console.log('Starting database migrations...');
 
-    // Read and execute the role permissions migration
-    const migrationPath = join(
-      __dirname,
-      '..',
-      'migrations',
-      '001_create_role_permissions.sql'
-    );
-    const migrationSQL = readFileSync(migrationPath, 'utf8');
+    // Get all migration files
+    const migrationsDir = join(__dirname, '..', 'migrations');
+    const migrationFiles = readdirSync(migrationsDir)
+      .filter(file => file.endsWith('.sql'))
+      .sort();
 
-    console.log('Running migration: 001_create_role_permissions.sql');
+    console.log(`Found ${migrationFiles.length} migration files:`, migrationFiles);
 
-    // Split SQL into individual statements, handling multi-line statements properly
-    const statements = [];
-    let currentStatement = '';
-    let inBlock = false;
-    let blockDelimiter = '';
+    for (const migrationFile of migrationFiles) {
+      console.log(`Running migration: ${migrationFile}`);
+      
+      const migrationPath = join(migrationsDir, migrationFile);
+      const migrationSQL = readFileSync(migrationPath, 'utf8');
 
-    const lines = migrationSQL.split('\n');
+      // Split SQL into individual statements, handling multi-line statements properly
+      const statements = [];
+      let currentStatement = '';
+      let inBlock = false;
+      let blockDelimiter = '';
 
-    for (const line of lines) {
-      const trimmedLine = line.trim();
+      const lines = migrationSQL.split('\n');
 
-      // Skip empty lines and comments
-      if (!trimmedLine || trimmedLine.startsWith('--')) {
-        continue;
-      }
+      for (const line of lines) {
+        const trimmedLine = line.trim();
 
-      currentStatement += line + '\n';
+        // Skip empty lines and comments
+        if (!trimmedLine || trimmedLine.startsWith('--')) {
+          continue;
+        }
 
-      // Check if we're starting a block (function, DO block, etc.)
-      if (!inBlock) {
-        if (
-          trimmedLine.includes('CREATE OR REPLACE FUNCTION') ||
-          trimmedLine.includes('CREATE FUNCTION')
-        ) {
-          inBlock = true;
-          blockDelimiter = '$$';
-        } else if (trimmedLine.includes('DO $$')) {
-          inBlock = true;
-          blockDelimiter = '$$';
+        currentStatement += line + '\n';
+
+        // Handle dollar-quoted strings (PostgreSQL)
+        if (trimmedLine.includes('$$')) {
+          if (!inBlock) {
+            // Starting a block
+            const dollarMatch = trimmedLine.match(/\$\$([^$]*)\$\$/);
+            if (dollarMatch) {
+              // Single-line dollar quote
+              continue;
+            } else {
+              // Multi-line dollar quote
+              inBlock = true;
+              blockDelimiter = trimmedLine.match(/\$\$[^$]*\$\$/)?.[0] || '$$';
+            }
+          } else {
+            // Check if this line ends the block
+            if (trimmedLine.includes(blockDelimiter)) {
+              inBlock = false;
+              blockDelimiter = '';
+            }
+          }
+        }
+
+        // If we're not in a block and the line ends with semicolon, it's a complete statement
+        if (!inBlock && trimmedLine.endsWith(';')) {
+          statements.push(currentStatement.trim());
+          currentStatement = '';
         }
       }
 
-      // Check if we're ending a block - look for $$ followed by language or semicolon
-      if (inBlock && trimmedLine.includes(blockDelimiter)) {
-        // Check if this line contains the end of the function/block
-        if (
-          trimmedLine.includes('$$ language') ||
-          trimmedLine.includes('$$;') ||
-          (trimmedLine.includes('$$') && trimmedLine.includes(';'))
-        ) {
-          inBlock = false;
-          blockDelimiter = '';
-        }
-      }
-
-      // If we're not in a block and we hit a semicolon, it's the end of a statement
-      if (!inBlock && trimmedLine.endsWith(';')) {
+      // Add any remaining statement
+      if (currentStatement.trim()) {
         statements.push(currentStatement.trim());
-        currentStatement = '';
       }
-    }
 
-    // Add any remaining statement
-    if (currentStatement.trim()) {
-      statements.push(currentStatement.trim());
-    }
+      console.log(`Found ${statements.length} SQL statements to execute`);
 
-    console.log(`Found ${statements.length} SQL statements to execute`);
-
-    for (let i = 0; i < statements.length; i++) {
-      const statement = statements[i];
-      if (statement.trim()) {
-        console.log(
-          `Executing statement ${i + 1}/${
-            statements.length
-          }: ${statement.substring(0, 50)}...`
-        );
-        await sql.query(statement);
+      // Execute each statement
+      for (let i = 0; i < statements.length; i++) {
+        const statement = statements[i];
+        if (statement) {
+          console.log(`Executing statement ${i + 1}/${statements.length}: ${statement.substring(0, 50)}...`);
+          try {
+            await sql.query(statement);
+          } catch (error) {
+            console.error(`Error executing statement ${i + 1}:`, error.message);
+            console.error('Statement:', statement);
+            throw error;
+          }
+        }
       }
+
+      console.log(`✅ Migration ${migrationFile} completed successfully!`);
     }
 
-    console.log('✅ Migration completed successfully!');
+    console.log('✅ All migrations completed successfully!');
 
     // Initialize roles and permissions
     console.log('Initializing roles and permissions...');
     const { RolePermissions } = await import('./role-permissions-init.js');
     const rolePermissions = new RolePermissions(databaseUrl);
     await rolePermissions.initializeRolesAndPermissions();
-
     console.log('✅ Roles and permissions initialized!');
+
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.error('Migration failed:', error);
     process.exit(1);
   }
 }

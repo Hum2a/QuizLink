@@ -219,6 +219,11 @@ export default {
       return handleUserAPI(request, url, env);
     }
 
+    // Social API endpoints (protected)
+    if (url.pathname.startsWith('/api/social/') && env.DATABASE_URL) {
+      return handleSocialAPI(request, url, env);
+    }
+
     // Admin API endpoints (protected)
     if (url.pathname.startsWith('/api/admin/') && env.DATABASE_URL) {
       return handleAdminAPI(request, url, env);
@@ -1169,4 +1174,401 @@ async function generateUniqueRoomCode(db: Database): Promise<string> {
 
   // If we can't find a unique code after max attempts, add timestamp
   return generateRoomCode() + Date.now().toString().slice(-2);
+}
+
+// Social API handler
+async function handleSocialAPI(request: Request, url: URL, env: Env): Promise<Response> {
+  const userAuth = new UserAuth(env.DATABASE_URL);
+  const token = userAuth.extractToken(request);
+  
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const payload = await userAuth.getUserFromToken(token);
+  if (!payload) {
+    return new Response(JSON.stringify({ error: 'Invalid token' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const pathParts = url.pathname.split('/');
+  const db = new Database(env.DATABASE_URL);
+
+  try {
+    // Friends endpoints
+    // GET /api/social/friends - Get user's friends
+    if (url.pathname === '/api/social/friends' && request.method === 'GET') {
+      const friends = await db.sql`
+        SELECT f.id, f.friend_id, f.status, f.created_at, f.accepted_at,
+               u.username, u.display_name, u.avatar_url, u.is_online, u.last_active
+        FROM friends f
+        JOIN users u ON f.friend_id = u.id
+        WHERE f.user_id = ${payload.userId} AND f.status = 'accepted'
+        ORDER BY u.is_online DESC, u.last_active DESC
+      `;
+      
+      return new Response(JSON.stringify(friends), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // GET /api/social/friend-requests - Get friend requests
+    if (url.pathname === '/api/social/friend-requests' && request.method === 'GET') {
+      const requests = await db.sql`
+        SELECT fr.id, fr.from_user_id, fr.message, fr.created_at,
+               u.username, u.display_name, u.avatar_url
+        FROM friend_requests fr
+        JOIN users u ON fr.from_user_id = u.id
+        WHERE fr.to_user_id = ${payload.userId} AND fr.status = 'pending'
+        ORDER BY fr.created_at DESC
+      `;
+      
+      return new Response(JSON.stringify(requests), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // POST /api/social/friend-requests - Send friend request
+    if (url.pathname === '/api/social/friend-requests' && request.method === 'POST') {
+      const body = (await request.json()) as {
+        toUserId: string;
+        message?: string;
+      };
+
+      // Check if users exist
+      const toUser = await db.sql`
+        SELECT id, username, display_name FROM users WHERE id = ${body.toUserId}
+      `;
+      
+      if (toUser.length === 0) {
+        return new Response(JSON.stringify({ error: 'User not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Check if already friends or request exists
+      const existing = await db.sql`
+        SELECT id FROM friends 
+        WHERE (user_id = ${payload.userId} AND friend_id = ${body.toUserId})
+           OR (user_id = ${body.toUserId} AND friend_id = ${payload.userId})
+      `;
+
+      if (existing.length > 0) {
+        return new Response(JSON.stringify({ error: 'Already friends or request pending' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Create friend request
+      const requestId = await db.sql`
+        INSERT INTO friend_requests (from_user_id, to_user_id, message)
+        VALUES (${payload.userId}, ${body.toUserId}, ${body.message || null})
+        RETURNING id
+      `;
+
+      // Add notification
+      await db.sql`
+        SELECT add_notification(
+          ${body.toUserId},
+          'friend_request',
+          'New Friend Request',
+          'You have a new friend request',
+          json_build_object('requestId', ${requestId[0].id})::jsonb
+        )
+      `;
+
+      return new Response(JSON.stringify({ success: true, requestId: requestId[0].id }), {
+        status: 201,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // PUT /api/social/friend-requests/:id/accept - Accept friend request
+    if (pathParts[4] === 'accept' && request.method === 'PUT') {
+      const requestId = pathParts[3];
+      
+      // Get the request
+      const friendRequest = await db.sql`
+        SELECT * FROM friend_requests 
+        WHERE id = ${requestId} AND to_user_id = ${payload.userId} AND status = 'pending'
+      `;
+
+      if (friendRequest.length === 0) {
+        return new Response(JSON.stringify({ error: 'Friend request not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const request = friendRequest[0];
+
+      // Update request status
+      await db.sql`
+        UPDATE friend_requests 
+        SET status = 'accepted', responded_at = NOW()
+        WHERE id = ${requestId}
+      `;
+
+      // Create friend relationships
+      await db.sql`
+        INSERT INTO friends (user_id, friend_id, status, accepted_at)
+        VALUES 
+          (${request.from_user_id}, ${request.to_user_id}, 'accepted', NOW()),
+          (${request.to_user_id}, ${request.from_user_id}, 'accepted', NOW())
+      `;
+
+      // Update friend counts
+      await db.sql`
+        UPDATE user_social_stats 
+        SET friends_count = friends_count + 1
+        WHERE user_id IN (${request.from_user_id}, ${request.to_user_id})
+      `;
+
+      // Add notification to requester
+      await db.sql`
+        SELECT add_notification(
+          ${request.from_user_id},
+          'friend_accepted',
+          'Friend Request Accepted',
+          'Your friend request was accepted'
+        )
+      `;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // PUT /api/social/friend-requests/:id/decline - Decline friend request
+    if (pathParts[4] === 'decline' && request.method === 'PUT') {
+      const requestId = pathParts[3];
+      
+      await db.sql`
+        UPDATE friend_requests 
+        SET status = 'declined', responded_at = NOW()
+        WHERE id = ${requestId} AND to_user_id = ${payload.userId}
+      `;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // DELETE /api/social/friends/:id - Remove friend
+    if (pathParts[3] === 'friends' && pathParts[4] && request.method === 'DELETE') {
+      const friendId = pathParts[4];
+      
+      // Remove friend relationships
+      await db.sql`
+        DELETE FROM friends 
+        WHERE (user_id = ${payload.userId} AND friend_id = ${friendId})
+           OR (user_id = ${friendId} AND friend_id = ${payload.userId})
+      `;
+
+      // Update friend counts
+      await db.sql`
+        UPDATE user_social_stats 
+        SET friends_count = GREATEST(friends_count - 1, 0)
+        WHERE user_id IN (${payload.userId}, ${friendId})
+      `;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Social feed endpoints
+    // GET /api/social/feed - Get social feed
+    if (url.pathname === '/api/social/feed' && request.method === 'GET') {
+      const limit = parseInt(url.searchParams.get('limit') || '20');
+      
+      const feed = await db.sql`
+        SELECT sa.id, sa.activity_type, sa.activity_data, sa.created_at,
+               u.username, u.display_name, u.avatar_url
+        FROM social_activities sa
+        JOIN users u ON sa.user_id = u.id
+        WHERE sa.is_public = true
+        ORDER BY sa.created_at DESC
+        LIMIT ${limit}
+      `;
+      
+      return new Response(JSON.stringify(feed), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // POST /api/social/activities - Add social activity
+    if (url.pathname === '/api/social/activities' && request.method === 'POST') {
+      const body = (await request.json()) as {
+        activityType: string;
+        activityData: any;
+        isPublic?: boolean;
+      };
+
+      const activityId = await db.sql`
+        SELECT add_social_activity(
+          ${payload.userId},
+          ${body.activityType},
+          ${JSON.stringify(body.activityData)}::jsonb,
+          ${body.isPublic ?? true}
+        )
+      `;
+
+      return new Response(JSON.stringify({ success: true, activityId: activityId[0].add_social_activity }), {
+        status: 201,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Notifications endpoints
+    // GET /api/social/notifications - Get notifications
+    if (url.pathname === '/api/social/notifications' && request.method === 'GET') {
+      const notifications = await db.sql`
+        SELECT * FROM notifications 
+        WHERE user_id = ${payload.userId}
+        ORDER BY created_at DESC
+        LIMIT 50
+      `;
+      
+      return new Response(JSON.stringify(notifications), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // PUT /api/social/notifications/:id/read - Mark notification as read
+    if (pathParts[4] === 'read' && request.method === 'PUT') {
+      const notificationId = pathParts[3];
+      
+      await db.sql`
+        UPDATE notifications 
+        SET read = true 
+        WHERE id = ${notificationId} AND user_id = ${payload.userId}
+      `;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // PUT /api/social/notifications/read-all - Mark all notifications as read
+    if (url.pathname === '/api/social/notifications/read-all' && request.method === 'PUT') {
+      await db.sql`
+        UPDATE notifications 
+        SET read = true 
+        WHERE user_id = ${payload.userId} AND read = false
+      `;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Leaderboard endpoints
+    // GET /api/social/leaderboard - Get leaderboard
+    if (url.pathname === '/api/social/leaderboard' && request.method === 'GET') {
+      const timeFrame = url.searchParams.get('timeFrame') || 'all-time';
+      const category = url.searchParams.get('category');
+      const difficulty = url.searchParams.get('difficulty');
+      
+      // Update leaderboard
+      await db.sql`
+        SELECT update_leaderboard(${timeFrame}, ${category || null}, ${difficulty || null})
+      `;
+
+      const leaderboard = await db.sql`
+        SELECT l.user_id, l.score, l.rank, l.last_played,
+               u.username, u.display_name, u.avatar_url
+        FROM leaderboards l
+        JOIN users u ON l.user_id = u.id
+        WHERE l.time_frame = ${timeFrame}
+        AND (${category || null} IS NULL OR l.category = ${category})
+        AND (${difficulty || null} IS NULL OR l.difficulty = ${difficulty})
+        ORDER BY l.rank ASC
+        LIMIT 100
+      `;
+      
+      return new Response(JSON.stringify(leaderboard), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // GET /api/social/stats - Get user social stats
+    if (url.pathname === '/api/social/stats' && request.method === 'GET') {
+      const stats = await db.sql`
+        SELECT * FROM user_social_stats 
+        WHERE user_id = ${payload.userId}
+      `;
+      
+      if (stats.length === 0) {
+        // Create default stats
+        await db.sql`
+          INSERT INTO user_social_stats (user_id) 
+          VALUES (${payload.userId})
+        `;
+        
+        const newStats = await db.sql`
+          SELECT * FROM user_social_stats 
+          WHERE user_id = ${payload.userId}
+        `;
+        
+        return new Response(JSON.stringify(newStats[0]), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      return new Response(JSON.stringify(stats[0]), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // PUT /api/social/stats - Update user social stats
+    if (url.pathname === '/api/social/stats' && request.method === 'PUT') {
+      const body = (await request.json()) as {
+        totalQuizzesPlayed?: number;
+        totalScore?: number;
+        achievementsUnlocked?: number;
+        friendsCount?: number;
+        currentStreak?: number;
+      };
+
+      await db.sql`
+        SELECT update_social_stats(
+          ${payload.userId},
+          ${body.totalQuizzesPlayed || 0},
+          ${body.totalScore || 0},
+          ${body.achievementsUnlocked || 0},
+          ${body.friendsCount || 0},
+          ${body.currentStreak || 0}
+        )
+      `;
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: 'Social endpoint not found' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Social API error:', error);
+    return new Response(
+      JSON.stringify({
+        error: 'Internal server error',
+        message: (error as Error).message,
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  }
 }
